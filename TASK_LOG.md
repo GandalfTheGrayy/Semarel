@@ -24,5 +24,26 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Clarified validation rules in `AGENTS.md`, current guardrail status in `PROJECT_CONTEXT.md`, and the Faz 1 scope in `NEXT.md`.
 - Validation: toolchain inventory, required-file checks, Godot headless import/parser validation, main-scene discovery, bounded runtime smoke test, YAML parse, and Git diff checks passed.
 - Gameplay systems remained out of scope.
-- Unresolved issues: none in local validation; the post-push CI result is reported separately after the workflow run is observed.
-- Commit: `chore: add project validation guardrails` (exact hash will be backfilled during the next context-maintenance task).
+- GitHub Actions validation passed after the push.
+- Unresolved issues: none.
+- Commit: `330329b800ff1dcc7bacb4674b59f0e71aee8fd0` (`chore: add project validation guardrails`).
+
+## 2026-09-14 — Faz 0.1 cleanup
+
+- Removed the unexpected `.missing-localappdata/` artifact produced during validation hardening and confirmed it no longer reappears.
+- GitHub Actions validation passed after the cleanup push.
+- Commit: `952ef9f8ec2549dcac4e5a1e6b141c4e5c234122`.
+
+## 2026-09-14 — Faz 1A: Authoritative World Data Foundation
+
+- Added a data-only, chunked `WorldGrid` with centralized world/chunk/local coordinate handling and explicit world bounds behavior.
+- Added scene-tree-independent `WorldChunkData` using a flat `PackedByteArray` terrain layer with 64×64-cell prototype chunks.
+- Added placeholder terrain IDs solely to exercise the storage contract; no final terrain taxonomy was established.
+- Added generic dirty-chunk tracking with clear and consume operations and no per-cell signal traffic.
+- Added a 68-assertion headless suite covering storage size, first/last cells, boundary conversion, negative/outside behavior, partial edge chunks, terrain access, dirty isolation, dirty consumption, and data-only types.
+- Integrated the suite into `tools/validate.ps1`, preserving the existing parser and runtime checks.
+- Recorded a non-gating 256×256 data sanity baseline with 100,000 deterministic set/get pairs in `docs/PERFORMANCE.md`.
+- Kept rendering, procedural generation, NPCs, navigation, save/load, and gameplay systems out of scope.
+- Local validation passed with no parser errors or test failures; post-push CI status is reported after the workflow is observed.
+- Unresolved issues: none in the implemented Faz 1A scope.
+- Commit: `feat: establish authoritative world data foundation` (exact hash will be backfilled during the next context-maintenance task).

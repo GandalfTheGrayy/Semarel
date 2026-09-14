@@ -47,6 +47,35 @@ function Invoke-GodotCheck {
     return $process.ExitCode
 }
 
+function Invoke-GodotCapturedCheck {
+    param([string[]]$Arguments)
+    $quotedArguments = @($Arguments | ForEach-Object {
+        if ($_ -match '[\s"]') { '"' + $_.Replace('"', '\"') + '"' } else { $_ }
+    })
+    $standardOutputPath = [IO.Path]::GetTempFileName()
+    $standardErrorPath = [IO.Path]::GetTempFileName()
+    try {
+        $process = Start-Process `
+            -FilePath $script:godotExecutable `
+            -ArgumentList $quotedArguments `
+            -NoNewWindow `
+            -Wait `
+            -PassThru `
+            -RedirectStandardOutput $standardOutputPath `
+            -RedirectStandardError $standardErrorPath
+        $standardOutput = Get-Content -LiteralPath $standardOutputPath -Raw
+        $standardError = Get-Content -LiteralPath $standardErrorPath -Raw
+        if ($standardOutput) { Write-Host $standardOutput.TrimEnd() }
+        if ($standardError) { Write-Host $standardError.TrimEnd() }
+        return [pscustomobject]@{
+            ExitCode = $process.ExitCode
+            Output = $standardOutput + $standardError
+        }
+    } finally {
+        Remove-Item -LiteralPath $standardOutputPath, $standardErrorPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 $script:godotExecutable = Resolve-GodotExecutable
 if (-not $script:godotExecutable) {
     Write-Fail 'Godot executable' 'godot was not found on PATH or in configured fallback locations'
@@ -63,6 +92,10 @@ if (-not $script:godotExecutable) {
 $requiredFiles = @(
     'project.godot',
     'scenes\main.tscn',
+    'scripts\world\terrain_types.gd',
+    'scripts\world\world_chunk_data.gd',
+    'scripts\world\world_grid.gd',
+    'tests\world_data_test.gd',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
     'AGENTS.md'
@@ -115,6 +148,25 @@ if ($script:godotExecutable -and $mainSceneValid) {
     }
 } else {
     Write-Fail 'Runtime smoke test' 'prerequisites failed'
+}
+
+$worldDataTest = Join-Path $repositoryRoot 'tests\world_data_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $worldDataTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/world_data_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^WORLD_DATA_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'World data tests' 'headless data-only suite completed'
+    } else {
+        Write-Fail 'World data tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'World data tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

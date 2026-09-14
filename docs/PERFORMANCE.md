@@ -1,19 +1,37 @@
 # Performance
 
-## Current evidence
+## Faz 1A data sanity baseline
 
-No gameplay benchmark exists in Faz 0, so there are no valid performance numbers yet.
+This is a small data-layout sanity measurement, not a performance target, optimization claim, or CI pass/fail threshold.
 
-## Metrics to capture when representative workloads exist
+| Field | Measured value |
+| --- | --- |
+| Date | 2026-09-14 |
+| Build | Godot Standard 4.7.2 stable, debug/editor binary |
+| Host | Windows 10 10.0.19045; AMD Ryzen 7 5800H; 15.3 GiB RAM |
+| Workload | Create a 256×256-cell world, then run 100,000 deterministic terrain sets and 100,000 matching gets |
+| Chunk layout | 64×64 cells; 4×4 chunks; 65,536 logical cells |
+| World initialization | 0.112 ms |
+| Set/get loop | 519.377 ms |
+| Checksum | 250000 |
+
+Command:
+
+```powershell
+godot --headless --path . --script res://benchmarks/world_data_sanity.gd
+```
+
+The measurement is a single local run and is hardware-dependent. Future comparisons must use the same workload and should take repeated samples before drawing conclusions.
+
+## Metrics not yet represented
 
 | Metric | Current value |
 | --- | --- |
-| NPC count | Not measured |
-| Simulation tick time | Not measured |
+| NPC count | Not implemented or measured |
+| Simulation tick time | Not implemented or measured |
 | Render FPS | Not measured |
 | Frame time | Not measured |
 | Memory use | Not measured |
-| Terrain update cost | Not measured |
-| Navigation/pathfinding cost | Not measured |
+| Navigation/pathfinding cost | Not implemented or measured |
 
-Future benchmark reports should record the build/commit, hardware context, scenario/seed, duration, sampling method, and raw output location. Do not compare numbers from non-equivalent workloads.
+Future representative benchmark reports should record the build/commit, hardware context, scenario/seed, duration, sampling method, and raw output. Do not compare numbers from non-equivalent workloads.

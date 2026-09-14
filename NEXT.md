@@ -1,3 +1,7 @@
-# Faz 1 – Dünya Temsili ve Terrain Temeli
+# Faz 1B – Terrain Visualization & World Inspection
 
-Design the authoritative world representation and terrain-cell data model, keeping visual presentation separate from world state. Build only a small working terrain prototype whose mutations can later support destruction, pathfinding, and save systems; do not add premature NPC or unrelated gameplay systems.
+Build a small read-only visualization and inspection path over the authoritative `WorldGrid` data introduced in Faz 1A.
+
+The renderer must consume world data without becoming authoritative. Keep coordinate conversion centralized, make dirty chunks usable for targeted visual refreshes, and provide enough inspection to verify which logical cell/chunk is being displayed.
+
+Do not add production procedural generation, NPCs, navigation, save/load, climate, biome, resource, ownership, combat, or unrelated gameplay systems in this phase.

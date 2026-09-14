@@ -1,25 +1,64 @@
 # Architecture
 
+## Authoritative world data
+
+The logical world is authoritative data. Rendering is a consumer of that data and must not become its source of truth.
+
+```text
+Authoritative World State
+        WorldGrid
+            ↓ owns chunks, bounds, coordinate conversion, dirty set
+    WorldChunkData
+            ↓ owns one logical layer
+PackedByteArray terrain storage
+
+Authoritative World State ≠ Rendering
+```
+
+`WorldGrid` and `WorldChunkData` extend `RefCounted`, not `Node`. They can therefore be created, queried, mutated, and tested without a scene tree, renderer, TileMap, sprite, texture, or camera.
+
+## WorldGrid responsibilities
+
+- Own the bounded logical world and its chunk collection.
+- Keep the prototype chunk size in the single `DEFAULT_CHUNK_SIZE` constant (currently 64).
+- Keep the prototype world size in `DEFAULT_WORLD_SIZE` (currently 256×256 cells).
+- Convert `Vector2i` world coordinates to chunk and local coordinates in one place.
+- Expose terrain reads and writes without exposing chunk array indexing to consumers.
+- Track changed chunks as a deduplicated dirty set.
+
+Coordinate helpers use floor-based chunk coordinates and normalized local coordinates for any integer input. Terrain access is stricter: positions must be in `[0, world_size)`. An out-of-world read returns `TerrainTypes.INVALID`; an out-of-world or invalid-ID write returns `false`, changes nothing, and marks no chunk dirty.
+
+World dimensions do not have to be exact multiples of the chunk size. Edge chunks retain the standard storage size while `WorldGrid` enforces the true world bounds.
+
+## WorldChunkData responsibilities
+
+- Own one chunk's terrain layer as a flat `PackedByteArray`.
+- Validate local coordinates.
+- Read, write, and fill terrain values.
+- Centralize flat indexing as `index = y * chunk_size + x`.
+
+The storage creates no per-cell Node, Object, Dictionary, or Resource. Terrain values are compact byte-sized IDs. `WATER`, `LAND`, `SAND`, and `ROCK` are prototype values, not final game-design commitments.
+
+## Change tracking
+
+`WorldGrid.set_terrain()` marks the affected chunk dirty only when the stored value changes. The dirty set deduplicates repeated changes within a chunk. Consumers can inspect it, clear it, or consume its current contents in one operation. There are deliberately no per-cell signals, gameplay-specific change types, event bus, or region system in Faz 1A.
+
+## Future logical layers
+
+Terrain is the first layer of world state, not the entire world model. A later phase can add elevation, moisture, climate, resources, ownership, or environmental state as separate packed arrays or chunk-owned data components while preserving `WorldGrid` coordinate and chunk ownership. The exact layer architecture is intentionally still open; none of those layers is implemented in Faz 1A.
+
+Likewise, final chunk size, world size, terrain count, save format, threading model, navigation representation, and generation strategy remain open decisions.
+
 ## Current project structure
 
 - `project.godot`: Godot project identity and pixel-art-friendly rendering defaults.
 - `scenes/main.tscn`: minimal `Main -> World` bootstrap scene.
 - `scripts/main.gd`: startup smoke marker only.
-- `assets/`: future game-ready art and audio, split into a few broad categories.
-- `data/`, `shaders/`, `tools/`, `tests/`, and `benchmarks/`: focused homes for future real artifacts.
-
-No gameplay subsystem architecture exists yet.
-
-## Guiding principles
-
-- Authoritative simulation state should not depend unnecessarily on scene-tree presentation Nodes.
-- Simulation updates and rendering should be able to run at different frequencies.
-- Data layouts should remain compatible with large populations, future chunks/spatial partitioning, deterministic reproduction, and local terrain/navigation updates.
-- Avoid speculative subsystem trees. Add modules and directories when real implementation requires them.
-- Establish measurements before making optimization claims or complex performance tradeoffs.
+- `scripts/world/`: authoritative world data classes.
+- `tests/world_data_test.gd`: headless data-only contract tests.
+- `benchmarks/world_data_sanity.gd`: small non-gating baseline workload.
+- `tools/validate.ps1`: local and CI validation entry point.
 
 ## Validation guardrails
 
-- `tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, and a bounded runtime smoke test.
-- `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary.
-- `tools/toolcheck.ps1` remains an environment inventory and is intentionally separate from project validation.
+`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and the world-data suite. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.

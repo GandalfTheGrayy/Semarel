@@ -153,5 +153,20 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Added a non-gating 10,000-entity lifecycle sanity benchmark; no performance threshold or optimization claim was introduced.
 - Interactive OpenGL inspection confirmed 32 visible markers from one renderer with zero child Nodes, simulation tick progression while world revision stayed fixed, readable diagnostics/inspector data, and working elevation-overlay plus four-chunk SPACE paths.
 - Preserved all six existing suites and the authoritative-world, generation, change-set, and presentation boundaries.
+- GitHub Actions validation passed for the implementation commit.
 - Unresolved issues: none in the implemented Faz 3A scope.
-- Commit: `feat: add simulation clock and entity foundation` (exact hash will be backfilled during the next context-maintenance task).
+- Commit: `0bae4f5e314ace45f9354d38f1a035be292a3e5a` (`feat: add simulation clock and entity foundation`).
+
+## 2026-09-15 — Faz 3B: Minimal Deterministic Entity Movement
+
+- Added controlled dense-index reads/writes to `EntityStore` for hot-loop iteration without full ID/position snapshots; invalid indices fail safely and stable IDs remain the only persistent identity.
+- Added stateless, data-only `PrototypeEntityMovement`, whose stable-ID-plus-tick integer hash selects a cardinal starting direction before testing all four neighbors deterministically.
+- Kept prototype passability local to movement: valid non-WATER destinations pass, while WATER/out-of-bounds destinations are rejected; no occupancy, collision, pathfinding, target, AI, or movement framework was introduced.
+- Integrated movement after each consumed fixed tick and coalesced presentation to at most one `DebugEntityRenderer` snapshot refresh after all due ticks in the render frame.
+- Preserved entity count/IDs and `WorldGrid` revision; movement creates/removes no entities, writes only `EntityStore` positions, and emits only a moved-entity count.
+- Expanded `EntityStore` coverage to 58 assertions and added a 210-assertion movement suite covering determinism, global-RNG isolation, first-tick semantics, 60/30/10-frame schedule equivalence, explicit LAND/SAND/ROCK/WATER behavior, bounds/one-cell constraints, dense-order independence, snapshot refresh, and five-tick catch-up coalescing.
+- Preserved the nine Faz 3A suites; all ten suites total 685 assertions through the standard validation command.
+- Measured separate non-gating storage and minimal-movement sanity workloads; the movement workload contains no AI, pathfinding, needs, combat, social simulation, spatial index, or rendering cost.
+- Interactive OpenGL inspection confirmed all 32 debug entities changed logical position by tick 9 without entering WATER or leaving world bounds, movement diagnostics advanced while normal movement left world revision unchanged, and one renderer retained 32 markers with zero child Nodes. The existing elevation overlay, inspector, and SPACE world-change path also remained functional.
+- Unresolved issues: none in the implemented Faz 3B scope.
+- Commit: `feat: add deterministic entity movement` (exact hash will be backfilled during the next context-maintenance task).

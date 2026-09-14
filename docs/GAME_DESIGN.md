@@ -27,6 +27,8 @@ Faz 2B's generator version `2` is the first coherent seeded-world prototype. Its
 
 Faz 3A's 10 Hz fixed clock, 32 stationary debug markers, logical-cell positions, marker color/size, and minimal ID-plus-position entity schema are engineering probes. They do not define final simulation speed, entity population, creature types, movement scale, sprites, animation, AI, needs, jobs, or gameplay behavior.
 
+Faz 3B's deterministic cardinal movement, maximum one logical cell per tick, prototype WATER blocking, and lack of occupancy are a test behavior for generic debug entities. They do not imply that final agents cannot swim, fly, sail, share cells, use sub-cell positions, move at varied speeds, pay terrain costs, animate between cells, collide, or navigate toward goals.
+
 ## Proposed / undecided
 
 Long-term candidates include procedural world generation, mutable terrain, elevation, climate, moisture, destruction, fire and environmental simulation, vegetation, animals, large NPC populations, needs and jobs, settlements, cities, kingdoms, diplomacy, war, buildings, economy, character animation, pixel particles, weather, disasters, magic or special world effects, save/load, and thousands of simulated entities.

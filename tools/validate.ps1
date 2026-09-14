@@ -99,6 +99,7 @@ $requiredFiles = @(
     'scripts\generation\world_generator.gd',
     'scripts\generation\world_fingerprint.gd',
     'scripts\simulation\simulation_clock.gd',
+    'scripts\simulation\prototype_entity_movement.gd',
     'scripts\entities\entity_store.gd',
     'scripts\presentation\world_presentation_config.gd',
     'scripts\presentation\debug_entity_renderer.gd',
@@ -118,8 +119,10 @@ $requiredFiles = @(
     'tests\simulation_clock_test.gd',
     'tests\entity_store_test.gd',
     'tests\debug_entity_renderer_test.gd',
+    'tests\entity_movement_test.gd',
     'benchmarks\world_generation_sanity.gd',
     'benchmarks\entity_store_sanity.gd',
+    'benchmarks\entity_movement_sanity.gd',
     'docs\PLANNING_GUARDRAILS.md',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
@@ -344,6 +347,25 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $debugEntityRendererTes
     }
 } else {
     Write-Fail 'Debug entity renderer tests' 'test script or Godot executable is missing'
+}
+
+$entityMovementTest = Join-Path $repositoryRoot 'tests\entity_movement_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $entityMovementTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/entity_movement_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^ENTITY_MOVEMENT_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Entity movement tests' 'headless deterministic movement suite completed'
+    } else {
+        Write-Fail 'Entity movement tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Entity movement tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

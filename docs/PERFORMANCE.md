@@ -124,12 +124,36 @@ godot --headless --path . --script res://benchmarks/entity_store_sanity.gd
 
 The workload measures only stable-ID lookup, packed logical positions, and swap-remove bookkeeping on one machine. It includes no AI, movement policy, spatial query, rendering, navigation, or real NPC data and does not establish supported population size.
 
+## Faz 3B minimal movement sanity baseline
+
+This is one local data-only movement-loop measurement, not a performance target, supported-NPC claim, optimization result, or CI threshold.
+
+| Field | Measured value |
+| --- | --- |
+| Date | 2026-09-15 |
+| Build | Godot Standard 4.7.2 stable, debug/editor binary |
+| Workload | 10,000 minimal entities on a 256×256 all-LAND world for 100 deterministic movement ticks |
+| Movement | Cardinal; at most one logical cell/tick; no occupancy |
+| Total movement time | 5,685.570 ms |
+| Average | 56.856 ms/tick |
+| Total moved | 1,000,000 |
+| Final checksum | 1,559,308,248 |
+| World revision | 0 |
+
+Command:
+
+```powershell
+godot --headless --path . --script res://benchmarks/entity_movement_sanity.gd
+```
+
+The workload isolates stable-ID hashing, dense position iteration, world bounds/terrain reads, and position writes. It excludes AI, needs, pathfinding, combat, social simulation, occupancy, spatial queries, entity rendering, and real agent data. The result therefore does not mean 10,000 complete NPCs are supported. No multithreading, ECS, GDExtension, SIMD, or spatial partitioning was added from this single baseline.
+
 ## Metrics not yet represented
 
 | Metric | Current value |
 | --- | --- |
-| NPC count | No NPC model; 32 stationary debug entities in preview and a 10,000-row data-store sanity workload only |
-| Simulation tick time | No simulation workload; fixed-clock schedule correctness only |
+| NPC count | No NPC model; 32 moving debug entities in preview and separate 10,000-row data/movement sanity workloads only |
+| Simulation tick time | 56.856 ms/tick for the isolated Faz 3B 10,000-entity minimal movement workload |
 | Render FPS | Not measured |
 | Frame time | Not measured |
 | Memory use | Not measured |

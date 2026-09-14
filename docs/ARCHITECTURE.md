@@ -191,7 +191,31 @@ Logical positions are bounded by the supplied world size, but `EntityStore` has 
 
 `EntityStore` is not an ECS framework. Faz 3A deliberately adds no registry, query system, component interface, inheritance tree, system scheduler, or generic entity manager. Dense packed columns and stable lookup solve only the current lifecycle requirement.
 
-`DebugEntityRenderer` is one presentation `Node2D` that copies logical positions only on explicit refresh and draws all markers in one `_draw()` pass. Thirty-two deterministic non-water positions make the preview inspectable; there is no Node per entity and the renderer never owns entity data. The main loop advances the clock and reports ticks but performs no artificial per-entity update. Entity behavior and renderer refresh from genuine simulation changes begin in a later phase.
+`DebugEntityRenderer` is one presentation `Node2D` that copies logical positions only on explicit refresh and draws all markers in one `_draw()` pass. Thirty-two deterministic non-water positions make the preview inspectable; there is no Node per entity and the renderer never owns entity data.
+
+## Prototype deterministic movement
+
+```text
+RENDER FRAME
+    ↓ delta
+SimulationClock
+    ↓ zero or more fixed ticks
+PrototypeEntityMovement
+    ↓ updates logical positions
+EntityStore (authoritative entity state)
+    ↓ one copied snapshot after all due ticks, only if movement occurred
+DebugEntityRenderer
+```
+
+`PrototypeEntityMovement.step(world, entities, tick_index)` is stateless and data-only. For each active entity it hashes the stable entity ID with the fixed-tick index, uses the low two bits as a starting cardinal direction, and tries all four cardinal neighbors in stable rotation order. The first in-bounds, valid, non-WATER destination is written through `EntityStore`; otherwise the entity stays. Each entity therefore moves by zero or one logical cell per tick.
+
+Movement reads `WorldGrid`, mutates `EntityStore`, and does not mutate `WorldGrid`. Consequently entity motion cannot create world-layer invalidations or advance the world revision. The prototype produces only a moved-entity count; no entity change set, event stream, entity revision, or per-entity event allocation exists.
+
+The pass uses `get_dense_count()` plus direct dense ID/position access instead of allocating full-store snapshots each tick. Stable entity IDs are identity; dense indices are ephemeral storage positions. A dense index may change after swap-remove and cannot be persisted as identity. Faz 3B performs no create/remove during movement, so the dense layout remains stable for the duration of each pass. If lifecycle mutation and iteration later share a tick, that contract must be revisited.
+
+Decisions use stable ID plus tick, never dense index or global RNG, so different dense ordering and render-frame schedules preserve per-identity results. Main processes all due simulation ticks, accumulates whether any entity moved, and refreshes presentation once at frame end rather than once per catch-up tick.
+
+WATER blocking belongs only to this prototype behavior; it is not a world-level passability rule or a universal species constraint. Multiple entities may occupy the same logical cell. Sub-cell positions, movement speed, terrain costs, swimming/flying, collision, occupancy, interpolation, targets, navigation, and pathfinding remain undecided and unimplemented.
 
 ## Current project structure
 
@@ -201,6 +225,7 @@ Logical positions are bounded by the supplied world size, but `EntityStore` has 
 - `scripts/world/`: authoritative world data classes.
 - `scripts/generation/`: deterministic initial-data producer and data-only fingerprint helper.
 - `scripts/simulation/`: data-only fixed-step simulation clock.
+- `scripts/simulation/prototype_entity_movement.gd`: stateless cardinal one-cell prototype movement pass.
 - `scripts/entities/`: minimal authoritative stable-ID and logical-position store.
 - `scripts/presentation/`: replaceable palette, rasterization, chunk rendering, inspection, and preview-fixture code.
 - `tests/world_data_test.gd`: headless data-only contract tests.
@@ -212,11 +237,13 @@ Logical positions are bounded by the supplied world size, but `EntityStore` has 
 - `tests/simulation_clock_test.gd`: headless fixed-step accumulation, catch-up, schedule-equivalence, and revision-independence tests.
 - `tests/entity_store_test.gd`: headless lifecycle, bounds, stable-ID, swap-remove, stale-ID, and snapshot tests.
 - `tests/debug_entity_renderer_test.gd`: headless copied-snapshot and no-per-entity-Node presentation tests.
+- `tests/entity_movement_test.gd`: headless deterministic movement, terrain/bounds, dense-order, render-schedule, and refresh-coalescing tests.
 - `benchmarks/world_data_sanity.gd`: small non-gating baseline workload.
 - `benchmarks/world_generation_sanity.gd`: one small non-gating generated-world baseline workload.
 - `benchmarks/entity_store_sanity.gd`: one non-gating 10,000-row minimal entity lifecycle workload.
+- `benchmarks/entity_movement_sanity.gd`: one non-gating 10,000-entity/100-tick minimal movement workload.
 - `tools/validate.ps1`: local and CI validation entry point.
 
 ## Validation guardrails
 
-`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and nine separate suites: world data, terrain visualization, world change sets, layer extensibility, elevation visualization, generation, simulation clock, entity store, and debug entity rendering. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.
+`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and ten separate suites: world data, terrain visualization, world change sets, layer extensibility, elevation visualization, generation, simulation clock, entity store, debug entity rendering, and deterministic movement. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.

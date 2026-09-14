@@ -71,6 +71,30 @@ func get_entity_count() -> int:
 	return _entity_ids.size()
 
 
+func get_dense_count() -> int:
+	return _entity_ids.size()
+
+
+func get_entity_id_at_dense_index(dense_index: int) -> int:
+	if not _is_valid_dense_index(dense_index):
+		return INVALID_ENTITY_ID
+	return _entity_ids[dense_index]
+
+
+func get_cell_position_at_dense_index(dense_index: int) -> Vector2i:
+	if not _is_valid_dense_index(dense_index):
+		return INVALID_CELL_POSITION
+	return Vector2i(_cell_x[dense_index], _cell_y[dense_index])
+
+
+func set_cell_position_at_dense_index(dense_index: int, cell_position: Vector2i) -> bool:
+	if not _is_valid_dense_index(dense_index) or not is_inside_world(cell_position):
+		return false
+	_cell_x[dense_index] = cell_position.x
+	_cell_y[dense_index] = cell_position.y
+	return true
+
+
 func get_world_size() -> Vector2i:
 	return _world_size
 
@@ -94,3 +118,7 @@ func get_cell_positions_copy() -> Array[Vector2i]:
 	for dense_index in range(_entity_ids.size()):
 		positions[dense_index] = Vector2i(_cell_x[dense_index], _cell_y[dense_index])
 	return positions
+
+
+func _is_valid_dense_index(dense_index: int) -> bool:
+	return dense_index >= 0 and dense_index < _entity_ids.size()

@@ -31,6 +31,10 @@ func get_refresh_count() -> int:
 	return _refresh_count
 
 
+func get_marker_positions_copy() -> Array[Vector2i]:
+	return _marker_positions.duplicate()
+
+
 func _draw() -> void:
 	for cell_position: Vector2i in _marker_positions:
 		var display_position := Vector2(cell_position) * WorldPresentationConfig.CELL_DISPLAY_SCALE

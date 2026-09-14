@@ -13,8 +13,11 @@ const DEBUG_ENTITY_PLACEMENT_STRIDE: int = 1_973
 var _world_grid: WorldGrid
 var _entity_store: EntityStore
 var _simulation_clock: SimulationClock
+var _entity_movement: PrototypeEntityMovement
 var _debug_probe_step: int = 0
 var _last_change_set: WorldChangeSet
+var _last_movement_tick: int = 0
+var _last_moved_entity_count: int = 0
 
 
 func _ready() -> void:
@@ -34,6 +37,7 @@ func _ready() -> void:
 	_debug_entity_renderer.set_entity_store(_entity_store)
 	_debug_entity_renderer.refresh_from_store()
 	_simulation_clock = SimulationClock.new()
+	_entity_movement = PrototypeEntityMovement.new()
 	_world_inspector.configure(_world_grid, _terrain_renderer)
 	_last_change_set = initial_change_set
 	_update_change_summary(initial_change_set)
@@ -52,8 +56,18 @@ func _process(delta: float) -> void:
 		return
 	_simulation_clock.add_time(delta)
 	var tick_advanced := false
+	var frame_moved_entity_count := 0
 	while _simulation_clock.consume_tick():
 		tick_advanced = true
+		_last_movement_tick = _simulation_clock.get_tick_index()
+		_last_moved_entity_count = _entity_movement.step(
+			_world_grid,
+			_entity_store,
+			_last_movement_tick,
+		)
+		frame_moved_entity_count += _last_moved_entity_count
+	if frame_moved_entity_count > 0:
+		_debug_entity_renderer.refresh_from_store()
 	if tick_advanced:
 		_update_change_summary(_last_change_set)
 
@@ -116,6 +130,8 @@ func _update_change_summary(change_set: WorldChangeSet) -> void:
 		% [_world_grid.get_revision(), _simulation_clock.get_tick_index()]
 		+ "simulation: %.1f Hz | entities: %d\n"
 		% [_simulation_clock.get_tick_rate(), _entity_store.get_entity_count()]
+		+ "movement tick: %d | moved: %d\n"
+		% [_last_movement_tick, _last_moved_entity_count]
 		+ "last change-set revision: %d\n" % change_set.get_revision()
 		+ "changed chunks: terrain %d | elevation %d"
 		% [change_set.get_terrain_chunk_count(), change_set.get_elevation_chunk_count()]

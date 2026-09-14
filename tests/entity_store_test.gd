@@ -9,6 +9,7 @@ func _initialize() -> void:
 	_test_position_update_and_stale_ids()
 	_test_swap_remove_first_middle_and_last()
 	_test_snapshot_immutability_and_layout()
+	_test_ephemeral_dense_iteration_api()
 	if _failures == 0:
 		print("ENTITY_STORE_TESTS_PASSED assertions=%d" % _assertions)
 	else:
@@ -101,6 +102,30 @@ func _test_snapshot_immutability_and_layout() -> void:
 	_expect_true(source.contains("PackedInt32Array"), "logical positions use compact packed columns")
 	_expect_false(source.contains("extends Node"), "entity store has no Node dependency")
 	_expect_false(source.contains("TerrainTypes"), "entity store does not know terrain")
+
+
+func _test_ephemeral_dense_iteration_api() -> void:
+	var store := EntityStore.new(Vector2i(5, 5))
+	var first := store.create_entity(Vector2i(1, 1))
+	var second := store.create_entity(Vector2i(2, 2))
+	_expect_equal(store.get_dense_count(), 2, "dense count follows active entity count")
+	_expect_equal(store.get_entity_id_at_dense_index(0), first, "dense zero exposes stable ID")
+	_expect_equal(store.get_entity_id_at_dense_index(1), second, "dense one exposes stable ID")
+	_expect_equal(store.get_cell_position_at_dense_index(1), Vector2i(2, 2), "dense position read")
+	_expect_true(store.set_cell_position_at_dense_index(1, Vector2i(4, 4)), "dense position write")
+	_expect_equal(store.get_cell_position(second), Vector2i(4, 4), "dense write updates stable-ID view")
+	_expect_false(store.set_cell_position_at_dense_index(1, Vector2i(5, 4)), "dense write enforces world bounds")
+	_expect_equal(store.get_entity_id_at_dense_index(-1), EntityStore.INVALID_ENTITY_ID, "negative dense ID read sentinel")
+	_expect_equal(store.get_entity_id_at_dense_index(2), EntityStore.INVALID_ENTITY_ID, "past-edge dense ID read sentinel")
+	_expect_equal(
+		store.get_cell_position_at_dense_index(2),
+		EntityStore.INVALID_CELL_POSITION,
+		"past-edge dense position sentinel",
+	)
+	_expect_false(store.set_cell_position_at_dense_index(2, Vector2i.ZERO), "past-edge dense write rejected")
+	store.remove_entity(first)
+	_expect_equal(store.get_entity_id_at_dense_index(0), second, "swap-remove changes ephemeral dense position")
+	_expect_equal(store.get_cell_position_at_dense_index(0), Vector2i(4, 4), "moved dense row retains data")
 
 
 func _expect_true(value: bool, label: String) -> void:

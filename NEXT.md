@@ -1,7 +1,7 @@
-# Faz 3B – Minimal Deterministic Entity Movement
+# Faz 3C – First Agent State & Lifecycle Slice
 
-Consider letting the small debug entity population move deterministically on the fixed simulation tick, remain inside world bounds, obey one minimal terrain-aware movement constraint, and refresh the single-node entity presentation when positions change.
+Consider evolving the generic debug entity into the first minimal agent by adding one small state or lifecycle requirement that demonstrates it is a living world participant. Use that real requirement to justify the first new compact `EntityStore` data field.
 
-Keep the phase narrow. Do not add pathfinding, an AI framework, needs, jobs, combat, settlements, animation, or a general movement-system architecture before the minimal deterministic behavior is proven.
+Keep the slice narrow and re-evaluate its exact scope from the Faz 3B result. Do not turn one state into a species framework, needs system, AI architecture, jobs, combat, settlements, or broad lifecycle engine.
 
 Before implementation, reassess this proposal against the repository's actual state, `docs/PLANNING_GUARDRAILS.md`, and Semarel's long-term gameplay direction. `NEXT.md` remains a planning proposal, not an automatic command.

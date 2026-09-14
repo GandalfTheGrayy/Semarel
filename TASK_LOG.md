@@ -60,5 +60,20 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Interactive OpenGL inspection confirmed visible terrain, correct debug colors, gap-free chunk joins, sharp nearest-neighbor scaling, correct cell/chunk/local data, and explicit outside-world reporting.
 - Added explicit workflow wiring for the repository-scoped `${{ github.token }}` while retaining `contents: read`, retries, and SHA-256 verification.
 - Production art, procedural generation, gameplay mutation, navigation, NPCs, and Faz 1C propagation remained out of scope.
+- GitHub Actions validation passed for the implementation commit.
 - Unresolved issues: none in the implemented Faz 1B scope.
-- Commit: `feat: add terrain visualization and inspection` (exact hash will be backfilled during the next context-maintenance task).
+- Commit: `e1a4c0a1fb48f01d17f1ccd90a66129ece08d030` (`feat: add terrain visualization and inspection`).
+
+## 2026-09-14 — Faz 1C: Generic World Change Propagation & Incremental Refresh
+
+- Added immutable-by-contract `WorldChangeSet` snapshots containing a committed revision and terrain-chunk invalidations only.
+- Replaced destructive dirty consumption with pending accumulation plus `WorldGrid.commit_changes()`; non-empty commits advance revision and empty commits do not.
+- Sorted terrain chunks deterministically by y then x, deduplicated same-chunk changes, and returned copied collections to every consumer.
+- Migrated `TerrainRenderer` to `apply_world_changes()` so it refreshes only listed chunks without changing the batch, pending state, revision, or authoritative terrain.
+- Added a SPACE-key debug probe that deterministically changes four cells spanning four chunks, commits one batch, and updates renderer plus revision/chunk-count UI.
+- Added a dedicated 44-assertion world change-set suite while preserving the 75-assertion world-data and 42-assertion visualization suites.
+- Interactive OpenGL checks confirmed revisions 1→2→3, four changed chunks per debug batch, LAND→ROCK→SAND inspection, targeted refresh, sharp filtering, and gap-free rendering.
+- Kept the change set as chunk-level invalidation metadata; no gameplay event bus, full cell diff, navigation, save/streaming, climate, or other future consumer was implemented.
+- Local parser/import, runtime smoke, and all three headless suites passed; post-push CI status is reported after the workflow is observed.
+- Unresolved issues: none in the implemented Faz 1C scope.
+- Commit: `feat: add generic world change propagation` (exact hash will be backfilled during the next context-maintenance task).

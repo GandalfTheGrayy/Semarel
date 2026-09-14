@@ -12,7 +12,7 @@ func _initialize() -> void:
 	_test_world_coordinates_and_bounds()
 	_test_chunk_read_api()
 	_test_world_terrain_access()
-	_test_dirty_chunk_tracking()
+	_test_pending_chunk_tracking()
 	_test_data_only_types()
 	if _failures == 0:
 		print("WORLD_DATA_TESTS_PASSED assertions=%d" % _assertions)
@@ -121,11 +121,11 @@ func _test_world_terrain_access() -> void:
 		_expect_equal(grid.get_terrain(positions[index]), terrains[index], "world terrain get %d" % index)
 	_expect_equal(grid.get_terrain(Vector2i(-1, 0)), TerrainTypes.INVALID, "negative world get sentinel")
 	_expect_equal(grid.get_terrain(TEST_WORLD_SIZE), TerrainTypes.INVALID, "past-edge world get sentinel")
-	grid.clear_dirty_chunks()
+	grid.commit_changes()
 	_expect_false(grid.set_terrain(Vector2i(-1, 0), TerrainTypes.Id.LAND), "negative world set rejected")
 	_expect_false(grid.set_terrain(TEST_WORLD_SIZE, TerrainTypes.Id.LAND), "past-edge world set rejected")
 	_expect_false(grid.set_terrain(Vector2i.ZERO, TerrainTypes.Id.size()), "invalid terrain ID rejected")
-	_expect_equal(grid.get_dirty_chunk_count(), 0, "invalid writes do not dirty chunks")
+	_expect_equal(grid.get_pending_terrain_chunk_count(), 0, "invalid writes do not create pending chunks")
 
 
 func _test_chunk_read_api() -> void:
@@ -159,31 +159,29 @@ func _test_chunk_read_api() -> void:
 	_expect_equal(grid.get_chunk_terrain_copy(Vector2i(2, 0)).size(), 0, "invalid chunk snapshot is empty")
 
 
-func _test_dirty_chunk_tracking() -> void:
+func _test_pending_chunk_tracking() -> void:
 	var grid := WorldGrid.new(TEST_WORLD_SIZE, TEST_CHUNK_SIZE, TerrainTypes.Id.LAND)
-	_expect_true(grid.set_terrain(Vector2i(1, 1), TerrainTypes.Id.SAND), "first dirty write")
+	_expect_true(grid.set_terrain(Vector2i(1, 1), TerrainTypes.Id.SAND), "first pending write")
 	_expect_true(grid.set_terrain(Vector2i(2, 2), TerrainTypes.Id.ROCK), "second write in same chunk")
-	_expect_equal(grid.get_dirty_chunk_count(), 1, "same-chunk writes produce one dirty chunk")
-	_expect_true(grid.is_chunk_dirty(Vector2i.ZERO), "origin chunk marked dirty")
+	_expect_equal(grid.get_pending_terrain_chunk_count(), 1, "same-chunk writes produce one pending chunk")
 	_expect_true(grid.set_terrain(Vector2i(2, 2), TerrainTypes.Id.ROCK), "same-value write accepted")
-	_expect_equal(grid.get_dirty_chunk_count(), 1, "same-value write adds no dirty entry")
+	_expect_equal(grid.get_pending_terrain_chunk_count(), 1, "same-value write adds no pending entry")
 
-	grid.clear_dirty_chunks()
-	_expect_equal(grid.get_dirty_chunk_count(), 0, "dirty chunks cleared")
+	var first_change_set := grid.commit_changes()
+	_expect_equal(first_change_set.get_terrain_chunks(), [Vector2i.ZERO], "commit returns pending origin chunk")
+	_expect_equal(grid.get_pending_terrain_chunk_count(), 0, "commit clears pending chunks")
 	_expect_true(
 		grid.set_terrain(Vector2i(TEST_CHUNK_SIZE - 1, 0), TerrainTypes.Id.SAND),
 		"write before chunk boundary",
 	)
 	_expect_true(grid.set_terrain(Vector2i(TEST_CHUNK_SIZE, 0), TerrainTypes.Id.ROCK), "write at chunk boundary")
-	_expect_equal(grid.get_dirty_chunk_count(), 2, "boundary writes dirty two chunks")
-	_expect_true(grid.is_chunk_dirty(Vector2i.ZERO), "left boundary chunk dirty")
-	_expect_true(grid.is_chunk_dirty(Vector2i(1, 0)), "right boundary chunk dirty")
-
-	var consumed := grid.consume_dirty_chunks()
-	_expect_equal(consumed.size(), 2, "consume returns both dirty chunks")
-	_expect_true(consumed.has(Vector2i.ZERO), "consume contains left chunk")
-	_expect_true(consumed.has(Vector2i(1, 0)), "consume contains right chunk")
-	_expect_equal(grid.get_dirty_chunk_count(), 0, "consume clears dirty state")
+	_expect_equal(grid.get_pending_terrain_chunk_count(), 2, "boundary writes create two pending chunks")
+	var boundary_change_set := grid.commit_changes()
+	_expect_equal(
+		boundary_change_set.get_terrain_chunks(),
+		[Vector2i.ZERO, Vector2i(1, 0)],
+		"boundary commit contains both chunks",
+	)
 
 
 func _test_data_only_types() -> void:

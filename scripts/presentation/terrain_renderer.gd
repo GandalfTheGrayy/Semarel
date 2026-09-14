@@ -6,6 +6,7 @@ const CELL_DISPLAY_SCALE: float = 2.0
 var _world_grid: WorldGrid
 var _chunk_sprites: Dictionary = {}
 var _chunk_images: Dictionary = {}
+var _last_applied_revision: int = 0
 
 
 func set_world_grid(world_grid: WorldGrid) -> void:
@@ -22,12 +23,9 @@ func rebuild_all() -> void:
 			_refresh_chunk(Vector2i(chunk_x, chunk_y))
 
 
-func refresh_chunks(changed_chunks: Array[Vector2i]) -> void:
-	if _world_grid == null:
-		return
-	for chunk_position in changed_chunks:
-		if _world_grid.is_valid_chunk_position(chunk_position):
-			_refresh_chunk(chunk_position)
+func apply_world_changes(change_set: WorldChangeSet) -> void:
+	_refresh_chunks(change_set.get_terrain_chunks())
+	_last_applied_revision = change_set.get_revision()
 
 
 func clear_visuals() -> void:
@@ -43,6 +41,10 @@ func get_chunk_visual_count() -> int:
 	return _chunk_sprites.size()
 
 
+func get_last_applied_revision() -> int:
+	return _last_applied_revision
+
+
 func get_chunk_image(chunk_position: Vector2i) -> Image:
 	var image := _chunk_images.get(chunk_position) as Image
 	if image == null:
@@ -55,6 +57,14 @@ func display_to_world_cell(local_display_position: Vector2) -> Vector2i:
 		floori(local_display_position.x / CELL_DISPLAY_SCALE),
 		floori(local_display_position.y / CELL_DISPLAY_SCALE),
 	)
+
+
+func _refresh_chunks(changed_chunks: Array[Vector2i]) -> void:
+	if _world_grid == null:
+		return
+	for chunk_position in changed_chunks:
+		if _world_grid.is_valid_chunk_position(chunk_position):
+			_refresh_chunk(chunk_position)
 
 
 func _refresh_chunk(chunk_position: Vector2i) -> void:

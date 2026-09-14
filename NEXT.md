@@ -1,7 +1,7 @@
-# Faz 1C – Generic World Change Propagation & Incremental Refresh
+# Faz 1D – World Layer Extensibility Probe
 
-Introduce a small generic runtime change-propagation path so one authoritative world change set can be observed by multiple consumers before it is cleared.
+Verify that the chunked world model can accept one small second logical data layer without coupling it to terrain or presentation.
 
-Use it to verify targeted terrain-renderer refreshes while keeping mutation and propagation independent from gameplay-specific concepts. Renderer, navigation, save/streaming, and future simulation consumers must not hide changes from one another through destructive consumption.
+A minimal byte-sized elevation/debug layer may be used to test independent storage, access, change invalidation, partial-edge behavior, and change-set extensibility. This is an architecture probe, not a climate, biome, hydrology, navigation, or production elevation system.
 
-Do not add procedural generation, NPCs, combat, disasters, player powers, navigation implementation, save/load, or other gameplay systems in this phase.
+Do not implement procedural generation, gameplay, NPCs, save/load, networking, or other future world systems in this phase.

@@ -72,7 +72,7 @@ func _test_partial_edge_rasterization() -> void:
 func _test_renderer_rebuild_and_incremental_refresh() -> void:
 	var grid := WorldGrid.new(Vector2i(3, 3), 2, TerrainTypes.Id.WATER)
 	grid.set_terrain(Vector2i.ZERO, TerrainTypes.Id.LAND)
-	grid.clear_dirty_chunks()
+	grid.commit_changes()
 	var renderer := TerrainRenderer.new()
 	renderer.set_world_grid(grid)
 	renderer.rebuild_all()
@@ -103,21 +103,20 @@ func _test_renderer_rebuild_and_incremental_refresh() -> void:
 	grid.set_terrain(Vector2i(2, 0), TerrainTypes.Id.ROCK)
 	var refreshed_sprite := renderer.get_node("Chunk_1_0") as Sprite2D
 	var texture_instance_id := refreshed_sprite.texture.get_instance_id()
-	var dirty_snapshot := grid.get_dirty_chunks()
-	renderer.refresh_chunks(dirty_snapshot)
+	var change_set := grid.commit_changes()
+	renderer.apply_world_changes(change_set)
 	_expect_equal(
 		refreshed_sprite.texture.get_instance_id(),
 		texture_instance_id,
 		"same-size incremental refresh reuses texture",
 	)
-	_expect_equal(grid.get_dirty_chunk_count(), 1, "renderer does not consume dirty state")
-	_expect_true(grid.is_chunk_dirty(Vector2i(1, 0)), "dirty state remains available to other consumers")
+	_expect_equal(change_set.get_terrain_chunk_count(), 1, "renderer leaves change-set metadata intact")
+	_expect_equal(change_set.get_terrain_chunks(), [Vector2i(1, 0)], "renderer does not consume change set")
 	_expect_color(
 		renderer.get_chunk_image(Vector2i(1, 0)).get_pixel(0, 0),
 		TerrainPalette.get_color(TerrainTypes.Id.ROCK),
 		"incremental refresh updates selected chunk",
 	)
-	grid.clear_dirty_chunks()
 	renderer.free()
 
 

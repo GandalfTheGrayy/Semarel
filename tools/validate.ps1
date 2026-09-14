@@ -94,6 +94,7 @@ $requiredFiles = @(
     'scenes\main.tscn',
     'scripts\world\terrain_types.gd',
     'scripts\world\world_chunk_data.gd',
+    'scripts\world\world_change_set.gd',
     'scripts\world\world_grid.gd',
     'scripts\presentation\terrain_palette.gd',
     'scripts\presentation\terrain_rasterizer.gd',
@@ -102,6 +103,7 @@ $requiredFiles = @(
     'scripts\presentation\world_preview_fixture.gd',
     'tests\world_data_test.gd',
     'tests\terrain_visualization_test.gd',
+    'tests\world_change_set_test.gd',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
     'AGENTS.md'
@@ -192,6 +194,25 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $terrainVisualizationTe
     }
 } else {
     Write-Fail 'Terrain visualization tests' 'test script or Godot executable is missing'
+}
+
+$worldChangeSetTest = Join-Path $repositoryRoot 'tests\world_change_set_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $worldChangeSetTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/world_change_set_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^WORLD_CHANGE_SET_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'World change-set tests' 'headless multi-consumer suite completed'
+    } else {
+        Write-Fail 'World change-set tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'World change-set tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

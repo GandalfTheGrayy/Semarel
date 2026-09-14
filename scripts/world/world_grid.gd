@@ -8,7 +8,8 @@ var _world_size: Vector2i
 var _chunk_size: int
 var _chunk_count: Vector2i
 var _chunks: Array[WorldChunkData] = []
-var _dirty_chunks: Dictionary = {}
+var _pending_terrain_chunks: Dictionary = {}
+var _revision: int = 0
 
 
 func _init(
@@ -42,6 +43,10 @@ func get_chunk_size() -> int:
 
 func get_chunk_count() -> Vector2i:
 	return _chunk_count
+
+
+func get_revision() -> int:
+	return _revision
 
 
 func is_valid_chunk_position(chunk_position: Vector2i) -> bool:
@@ -113,33 +118,24 @@ func set_terrain(world_position: Vector2i, terrain: int) -> bool:
 		return true
 	if not chunk.set_terrain(local_position, terrain):
 		return false
-	_dirty_chunks[chunk_position] = true
+	_pending_terrain_chunks[chunk_position] = true
 	return true
 
 
-func is_chunk_dirty(chunk_position: Vector2i) -> bool:
-	return _dirty_chunks.has(chunk_position)
+func get_pending_terrain_chunk_count() -> int:
+	return _pending_terrain_chunks.size()
 
 
-func get_dirty_chunk_count() -> int:
-	return _dirty_chunks.size()
+func commit_changes() -> WorldChangeSet:
+	if _pending_terrain_chunks.is_empty():
+		return WorldChangeSet.new(_revision, [])
 
-
-func get_dirty_chunks() -> Array[Vector2i]:
-	var result: Array[Vector2i] = []
-	for chunk_position: Vector2i in _dirty_chunks:
-		result.append(chunk_position)
-	return result
-
-
-func consume_dirty_chunks() -> Array[Vector2i]:
-	var result := get_dirty_chunks()
-	_dirty_chunks.clear()
-	return result
-
-
-func clear_dirty_chunks() -> void:
-	_dirty_chunks.clear()
+	var terrain_chunks: Array[Vector2i] = []
+	for chunk_position: Vector2i in _pending_terrain_chunks:
+		terrain_chunks.append(chunk_position)
+	_revision += 1
+	_pending_terrain_chunks.clear()
+	return WorldChangeSet.new(_revision, terrain_chunks)
 
 
 func _get_chunk(chunk_position: Vector2i) -> WorldChunkData:

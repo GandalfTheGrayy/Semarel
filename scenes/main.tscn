@@ -49,6 +49,14 @@ text = "World Inspector\n\noutside world"
 offset_left = 570.0
 offset_top = 228.0
 offset_right = 876.0
-offset_bottom = 310.0
+offset_bottom = 294.0
 theme_override_colors/font_color = Color(0.54, 0.61, 0.68, 1)
 text = "Move the mouse over the world to inspect\nlogical cell, chunk, local coordinate,\nand prototype terrain data."
+
+[node name="ChangeSummary" type="Label" parent="DebugUI"]
+offset_left = 570.0
+offset_top = 320.0
+offset_right = 876.0
+offset_bottom = 418.0
+theme_override_colors/font_color = Color(0.72, 0.78, 0.84, 1)
+text = "SPACE: apply debug change batch\nworld revision: 0\nlast change-set revision: 0\nlast changed terrain chunks: 0"

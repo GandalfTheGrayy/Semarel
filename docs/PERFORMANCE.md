@@ -30,6 +30,12 @@ The measurement is a single local run and is hardware-dependent. Future comparis
 - Interactive OpenGL inspection on the recorded workstation showed no obvious stall, blurred filtering, chunk gap, or overlap.
 - No render-time target or CI performance threshold was introduced, and no numeric renderer benchmark is claimed.
 
+## Faz 1C change propagation sanity
+
+- Pending metadata contains unique changed chunk coordinates, not per-cell events or a full-world snapshot.
+- The automated batch test changes 100 cells in one chunk and produces one terrain-chunk invalidation.
+- Committing copies only changed chunk-coordinate metadata into a stable change set; no new performance target or benchmark threshold was introduced.
+
 ## Metrics not yet represented
 
 | Metric | Current value |

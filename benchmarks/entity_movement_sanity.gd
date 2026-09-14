@@ -8,13 +8,17 @@ const WORLD_SIZE: Vector2i = Vector2i(256, 256)
 func _init() -> void:
 	var world := WorldGrid.new(WORLD_SIZE, WorldGrid.DEFAULT_CHUNK_SIZE, TerrainTypes.Id.LAND)
 	var store := EntityStore.new(WORLD_SIZE)
+	var living := LivingStateStore.new(store)
 	for index in range(ENTITY_COUNT):
-		store.create_entity(Vector2i(index % WORLD_SIZE.x, floori(float(index) / WORLD_SIZE.x)))
+		var entity_id := store.create_entity(
+			Vector2i(index % WORLD_SIZE.x, floori(float(index) / WORLD_SIZE.x)),
+		)
+		living.add_living_state(entity_id, 0)
 	var movement := PrototypeEntityMovement.new()
 	var total_moved_count: int = 0
 	var movement_started := Time.get_ticks_usec()
 	for tick_index in range(1, TICK_COUNT + 1):
-		total_moved_count += movement.step(world, store, tick_index)
+		total_moved_count += movement.step(world, store, living, tick_index)
 	var movement_usec := Time.get_ticks_usec() - movement_started
 
 	var checksum: int = 0
@@ -24,7 +28,10 @@ func _init() -> void:
 		checksum = (checksum + entity_id * 31 + position.x * 7 + position.y) & 0x7fffffff
 
 	print("ENTITY_MOVEMENT_SANITY")
-	print("entities=%d ticks=%d" % [store.get_entity_count(), TICK_COUNT])
+	print(
+		"entities=%d living=%d ticks=%d"
+		% [store.get_entity_count(), living.get_living_count(), TICK_COUNT],
+	)
 	print(
 		"total_ms=%.3f average_ms_per_tick=%.3f"
 		% [movement_usec / 1000.0, movement_usec / 1000.0 / TICK_COUNT],

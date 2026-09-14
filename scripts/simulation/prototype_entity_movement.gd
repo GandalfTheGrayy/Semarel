@@ -10,24 +10,33 @@ const _DIRECTIONS: Array[Vector2i] = [
 ]
 
 
-func step(world_grid: WorldGrid, entity_store: EntityStore, tick_index: int) -> int:
+func step(
+	world_grid: WorldGrid,
+	entity_store: EntityStore,
+	living_state_store: LivingStateStore,
+	tick_index: int,
+) -> int:
 	assert(world_grid != null, "Prototype movement requires a WorldGrid")
 	assert(entity_store != null, "Prototype movement requires an EntityStore")
+	assert(living_state_store != null, "Prototype movement requires a LivingStateStore")
 	assert(world_grid.get_world_size() == entity_store.get_world_size(), "World and entity bounds must match")
+	assert(living_state_store.is_bound_to(entity_store), "Living state must belong to the movement EntityStore")
 	assert(tick_index >= 0, "Simulation tick index cannot be negative")
 
 	var moved_entity_count := 0
-	var dense_count := entity_store.get_dense_count()
+	var dense_count := living_state_store.get_dense_count()
 	for dense_index in range(dense_count):
-		var entity_id := entity_store.get_entity_id_at_dense_index(dense_index)
-		var current_position := entity_store.get_cell_position_at_dense_index(dense_index)
+		var entity_id := living_state_store.get_entity_id_at_dense_index(dense_index)
+		if not entity_store.has_entity(entity_id):
+			continue
+		var current_position := entity_store.get_cell_position(entity_id)
 		var direction_start := _direction_start(entity_id, tick_index)
 		for direction_attempt in range(_DIRECTIONS.size()):
 			var direction_index := (direction_start + direction_attempt) % _DIRECTIONS.size()
 			var destination := current_position + _DIRECTIONS[direction_index]
 			if not _is_valid_destination(world_grid, entity_store, destination):
 				continue
-			if entity_store.set_cell_position_at_dense_index(dense_index, destination):
+			if entity_store.set_cell_position(entity_id, destination):
 				moved_entity_count += 1
 			break
 	return moved_entity_count

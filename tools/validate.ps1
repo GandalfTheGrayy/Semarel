@@ -101,6 +101,7 @@ $requiredFiles = @(
     'scripts\simulation\simulation_clock.gd',
     'scripts\simulation\prototype_entity_movement.gd',
     'scripts\entities\entity_store.gd',
+    'scripts\entities\living_state_store.gd',
     'scripts\presentation\world_presentation_config.gd',
     'scripts\presentation\debug_entity_renderer.gd',
     'scripts\presentation\elevation_rasterizer.gd',
@@ -118,6 +119,7 @@ $requiredFiles = @(
     'tests\world_generation_test.gd',
     'tests\simulation_clock_test.gd',
     'tests\entity_store_test.gd',
+    'tests\living_state_store_test.gd',
     'tests\debug_entity_renderer_test.gd',
     'tests\entity_movement_test.gd',
     'benchmarks\world_generation_sanity.gd',
@@ -328,6 +330,25 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $entityStoreTest -PathT
     }
 } else {
     Write-Fail 'Entity store tests' 'test script or Godot executable is missing'
+}
+
+$livingStateStoreTest = Join-Path $repositoryRoot 'tests\living_state_store_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $livingStateStoreTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/living_state_store_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^LIVING_STATE_STORE_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Living state store tests' 'headless optional-state suite completed'
+    } else {
+        Write-Fail 'Living state store tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Living state store tests' 'test script or Godot executable is missing'
 }
 
 $debugEntityRendererTest = Join-Path $repositoryRoot 'tests\debug_entity_renderer_test.gd'

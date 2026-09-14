@@ -9,6 +9,7 @@ const _HASH_MASK: int = 0x7fffffff
 func _init() -> void:
 	var world := WorldGrid.new(WORLD_SIZE, WorldGrid.DEFAULT_CHUNK_SIZE, TerrainTypes.Id.LAND)
 	var store := _create_store()
+	var living := _create_living_store_for_all(store)
 	var representative_positions: Array[Vector2i] = []
 	var alternate_positions: Array[Vector2i] = []
 	representative_positions.resize(ENTITY_COUNT)
@@ -22,8 +23,8 @@ func _init() -> void:
 	var hash_checksum: int = 0
 	var hash_started := Time.get_ticks_usec()
 	for tick_index in range(1, TICK_COUNT + 1):
-		for dense_index in range(store.get_dense_count()):
-			var entity_id := store.get_entity_id_at_dense_index(dense_index)
+		for dense_index in range(living.get_dense_count()):
+			var entity_id := living.get_entity_id_at_dense_index(dense_index)
 			var direction_start := _direction_start(entity_id, tick_index)
 			hash_checksum = (hash_checksum + entity_id * 31 + direction_start) & _HASH_MASK
 	var hash_usec := Time.get_ticks_usec() - hash_started
@@ -55,11 +56,12 @@ func _init() -> void:
 	var position_write_checksum := _position_checksum(store)
 
 	var movement_store := _create_store()
+	var movement_living := _create_living_store_for_all(movement_store)
 	var movement := PrototypeEntityMovement.new()
 	var total_moved_count: int = 0
 	var movement_started := Time.get_ticks_usec()
 	for tick_index in range(1, TICK_COUNT + 1):
-		total_moved_count += movement.step(world, movement_store, tick_index)
+		total_moved_count += movement.step(world, movement_store, movement_living, tick_index)
 	var movement_usec := Time.get_ticks_usec() - movement_started
 	var movement_checksum := _movement_checksum(movement_store)
 
@@ -94,6 +96,13 @@ func _create_store() -> EntityStore:
 	for index in range(ENTITY_COUNT):
 		store.create_entity(Vector2i(index % WORLD_SIZE.x, floori(float(index) / WORLD_SIZE.x)))
 	return store
+
+
+func _create_living_store_for_all(store: EntityStore) -> LivingStateStore:
+	var living := LivingStateStore.new(store)
+	for dense_index in range(store.get_dense_count()):
+		living.add_living_state(store.get_entity_id_at_dense_index(dense_index), 0)
+	return living
 
 
 # Mirrors the production movement decision so this benchmark measures the same work

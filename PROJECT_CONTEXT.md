@@ -14,8 +14,9 @@
 - **Faz 2A – Deterministic World Initialization & Generation Boundary** is complete, pushed, and validated on `main`.
 - **Faz 2B – First Coherent Seeded World Prototype** is complete, pushed, and validated on `main` at `58b4de7557713ab629959e5e75f9139d4c1f11be`.
 - **Faz 3A – Simulation Clock & Minimal Entity Foundation** is complete, pushed, and validated on `main` at `0bae4f5e314ace45f9354d38f1a035be292a3e5a`.
-- Current completed phase: **Faz 3B.1 – Movement Hot-Path Diagnosis & Bounded Correction**.
-- Next proposed phase: **Faz 3C – First Agent State & Lifecycle Slice**; this remains subject to repository and product-direction review.
+- **Faz 3B.1 – Movement Hot-Path Diagnosis & Bounded Correction** is complete, pushed, and validated on `main` at `10f90a059f93d054e0e896977518822bb8b331bf`.
+- Current completed phase: **Faz 3C – Heterogeneous Entity State Boundary & First Living-State Slice**.
+- Next step: **Planning Checkpoint – Domain-Specific Entity Systems**. User consultation is required before selecting a new gameplay/content domain.
 
 ## Implemented systems
 
@@ -46,10 +47,13 @@
 - `SimulationClock` is a scene-tree-independent fixed-step accumulator. Its prototype 10 Hz tick index advances independently from render frames and `WorldGrid` revisions.
 - `EntityStore` owns minimal entity identity and logical cell position in dense packed columns: stable IDs in `PackedInt64Array`, x/y in separate `PackedInt32Array` values, plus one ID-to-dense-index lookup.
 - Entity IDs begin at 1, increase monotonically, are never reused, and remain distinct from swap-remove dense indices.
+- `LivingStateStore` is an optional state owner bound to one `EntityStore`; it stores living-member IDs and immutable `birth_tick` values in `PackedInt64Array` columns and derives age on demand.
+- Generic entities need no living row. Removing living state preserves the core entity; the orchestration owner removes optional rows before core identity when destroying an entity.
 - `DebugEntityRenderer` draws copied entity positions from one `Node2D`; the 32-entity preview creates no per-entity Nodes and refreshes at most once after all due ticks in a render frame.
 - A non-gating 10,000-entity create/read-update/remove sanity workload exists at `benchmarks/entity_store_sanity.gd`.
-- `PrototypeEntityMovement` is a stateless, scene-tree-independent fixed-tick behavior that chooses cardinal directions deterministically from stable entity ID plus tick index.
+- `PrototypeEntityMovement` is a stateless, scene-tree-independent fixed-tick behavior that iterates living membership and chooses cardinal directions deterministically from stable entity ID plus tick index.
 - The movement prototype reads `WorldGrid`, writes authoritative positions through `EntityStore`, rejects out-of-bounds/WATER destinations, and reports only a moved-entity count.
+- The debug preview attaches living state with `birth_tick = 0` to all 32 current markers and reports generic and living counts separately.
 - A separate non-gating 10,000-entity/100-tick movement sanity workload exists at `benchmarks/entity_movement_sanity.gd`.
 - A development-only, non-gating component benchmark at `benchmarks/entity_movement_profile.gd` compares dense ID/hash work, position reads, safe terrain reads, position writes, and full movement at the same 10,000-entity/100-tick scale.
 
@@ -76,12 +80,14 @@
 - Terrain and elevation are related through the generator-v2 prototype height field. This relationship belongs to the replaceable v2 algorithm and is not a global `WorldGrid` invariant.
 - Generation writes through the public `WorldGrid` API and leaves pending changes for the owner/orchestrator to commit once. Runtime authoritative ownership remains exclusively with `WorldGrid`.
 - Generation is new-world initialization, not ongoing climate, erosion, ecosystem, or other runtime simulation.
-- Environment state, entity state, simulation time, and presentation have separate owners: `WorldGrid`, `EntityStore`, `SimulationClock`, and renderer Nodes respectively.
-- `EntityStore` validates logical world bounds but deliberately knows nothing about terrain, rendering, behavior, types, health, AI, or navigation.
+- Environment state, core entity state, optional living state, simulation time, and presentation have separate owners: `WorldGrid`, `EntityStore`, `LivingStateStore`, `SimulationClock`, and renderer Nodes respectively.
+- `EntityStore` validates logical world bounds but deliberately knows nothing about living status, terrain, rendering, behavior, types, health, AI, or navigation. A core entity is not inherently living, an NPC, or an agent.
+- `LivingStateStore` validates core identity on attachment but does not own IDs or positions. Age is `current_tick - birth_tick`, not mutable per-tick state.
+- Optional-state removal does not cascade into core removal. The main/orchestration layer owns cleanup ordering; Faz 3C adds no event bus, coordinator, registry, or ECS.
 - Entity removal uses swap-remove and repairs the moved stable-ID mapping in constant time; stale IDs are rejected safely.
 - `SimulationClock.add_time()` rejects negative deltas, accumulates non-negative render delta, and exposes every due fixed tick through `consume_tick()`. Large-frame catch-up currently processes all due ticks; a production overload cap remains undecided.
 - Stable entity IDs are identity; dense indices are ephemeral storage positions that may change after swap-remove and must not be retained across lifecycle changes.
-- Movement iterates the dense store without full-store snapshots and performs no create/remove, so the dense layout stays fixed during each pass.
+- Movement iterates the living-state dense membership without full-store snapshots, resolves positions through the core store, and performs no create/remove, so the dense layout stays fixed during each pass.
 - Direction decisions depend on stable ID and tick rather than dense order. Global RNG activity and render-frame schedule do not affect final positions for the same tick sequence.
 - The main preview processes every due movement tick, then refreshes entity presentation once only if at least one entity moved.
 - Entity movement does not mutate `WorldGrid` or advance its revision. It has no entity revision or change-set framework because no second entity-state consumer requires one yet.
@@ -101,12 +107,13 @@
 - World-change revisions identify committed non-empty batches only; they are not simulation ticks, save versions, or network sequence numbers.
 - The current 10 Hz clock and logical-cell entity positions are engineering prototype contracts, not final simulation-rate or movement-scale decisions.
 - `EntityStore` is a minimal data owner, not an ECS framework or final entity model.
+- Optional living membership is the first heterogeneous-state proof. It does not imply that every living category walks or that species, health, needs, death, reproduction, or character systems have been designed.
 - Cardinal one-cell movement, prototype WATER blocking, lack of occupancy, and allowing multiple entities in one cell are temporary Faz 3B contracts, not universal species or final movement rules.
 - Semarel may take high-level inspiration from emergent sandbox simulations, but its systems, mechanics, identity, and visual language must be original.
 
 ## Open decisions
 
-Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, simulation tick rate/catch-up policy, final entity schema, sub-cell movement/speed, terrain costs, swimming/flying, occupancy/collision, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
+Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, simulation tick rate/catch-up policy, final entity schema, species, health, needs, death/lifecycle rules, sub-cell movement/speed, terrain costs, swimming/flying, occupancy/collision, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
 
 ## Verified development tools
 
@@ -114,13 +121,14 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 
 ## Known problems and performance data
 
-- Known project problems: safe world terrain access remains the largest isolated component in the synthetic Faz 3B.1 movement diagnosis even after the bounded coordinate-transform correction; more invasive optimization is deferred until representative simulation evidence exists.
+- Known project problems: safe world terrain access remains the largest isolated component in the synthetic movement diagnosis; the optional living-membership layer adds modest measured overhead to that synthetic loop, but no catastrophic 2×/3× regression. More invasive optimization is deferred until representative simulation evidence exists.
 - Data-only world access, generation, entity-store, and minimal movement sanity/diagnostic measurements are recorded in `docs/PERFORMANCE.md`; none is a performance target, supported-NPC claim, production guarantee, or CI threshold.
-- Production-quality procedural generation, AI, pathfinding, occupancy, animation, agent lifecycle/state, biomes, climate, hydrology, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
+- Production-quality procedural generation, AI, pathfinding, occupancy, animation, domain-specific lifecycle/health/needs/species systems, biomes, climate, hydrology, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
 
 ## Repository rules
 
 - `docs/PLANNING_GUARDRAILS.md` is the persistent project-direction reference used alongside repository evidence when planning future phases; it does not replace `AGENTS.md`.
+- `docs/FUTURE_SYSTEM_CONSTRAINTS.md` records broad architecture capability targets, not a roadmap, implementation order, schema, UI, mechanic, or balance specification.
 - Treat current code, documentation, and Git history as the durable source of truth.
 - Preserve unrelated user work and inspect existing behavior before changing it.
 - Keep tasks scoped, test meaningful changes, update context/log/next documents, review diffs, commit, and push.

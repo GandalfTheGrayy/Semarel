@@ -167,7 +167,7 @@ The shared-height relation is specific to generator v2. It is not a `WorldGrid` 
 
 `WorldPreviewFixture` remains a presentation-test fixture for known pixel expectations. It is distinct from `WorldGenerator`, which initializes the main preview and produces the first spatially coherent debug world. Generation means new-world creation; it is not runtime simulation and does not stand in for future climate, erosion, ecosystems, resources, or other ongoing systems. Generator v2 is not the final procedural generator, biome model, elevation model, geology system, or hydrology system.
 
-## Simulation time and minimal entity state
+## Simulation time and heterogeneous entity state
 
 ```text
 FRAME TIME                         AUTHORITATIVE OWNERS
@@ -191,6 +191,25 @@ Logical positions are bounded by the supplied world size, but `EntityStore` has 
 
 `EntityStore` is not an ECS framework. Faz 3A deliberately adds no registry, query system, component interface, inheritance tree, system scheduler, or generic entity manager. Dense packed columns and stable lookup solve only the current lifecycle requirement.
 
+`LivingStateStore` is a separate optional-state owner bound to one `EntityStore`. It stores only the stable entity ID and `birth_tick` in packed `PackedInt64Array` columns, with a dictionary from stable ID to ephemeral dense index. A generic entity without a living-state row remains a valid non-living entity. An entity ID is owned by `EntityStore`; optional stores never allocate, recycle, or replace identity.
+
+Age is derived as `current_tick - birth_tick` on demand. It is not stored and is not incremented every simulation tick. Invalid membership, a negative birth tick, or a current tick before birth returns the documented sentinel. Simulation ticks remain independent from world revisions.
+
+```text
+EntityStore
+  all generic entities: stable ID + logical position
+
+Optional state stores
+  LivingStateStore: living members only + birth_tick
+
+EntityStore entity
+  may have LivingState
+  may later have other domain state
+  does not imply NPC, agent, or living creature
+```
+
+Removing living state does not remove the core entity. The orchestration owner must remove optional state before removing the core entity when destroying an entity. Faz 3C deliberately adds no event bus, lifecycle coordinator, component registry, or ECS. Future building, inventory, combat, or other domain data may use separate optional owners if their actual requirements justify that structure.
+
 `DebugEntityRenderer` is one presentation `Node2D` that copies logical positions only on explicit refresh and draws all markers in one `_draw()` pass. Thirty-two deterministic non-water positions make the preview inspectable; there is no Node per entity and the renderer never owns entity data.
 
 ## Prototype deterministic movement
@@ -207,17 +226,17 @@ EntityStore (authoritative entity state)
 DebugEntityRenderer
 ```
 
-`PrototypeEntityMovement.step(world, entities, tick_index)` is stateless and data-only. For each active entity it hashes the stable entity ID with the fixed-tick index, uses the low two bits as a starting cardinal direction, and tries all four cardinal neighbors in stable rotation order. The first in-bounds, valid, non-WATER destination is written through `EntityStore`; otherwise the entity stays. Each entity therefore moves by zero or one logical cell per tick.
+`PrototypeEntityMovement.step(world, entities, living_states, tick_index)` is stateless and data-only. It iterates only the optional living-state membership, then resolves each member's logical position through `EntityStore`. For each living member it hashes the stable entity ID with the fixed-tick index, uses the low two bits as a starting cardinal direction, and tries all four cardinal neighbors in stable rotation order. The first in-bounds, valid, non-WATER destination is written through `EntityStore`; otherwise the entity stays. Each participating entity therefore moves by zero or one logical cell per tick. A core entity without living state is excluded.
 
 Movement reads `WorldGrid`, mutates `EntityStore`, and does not mutate `WorldGrid`. Consequently entity motion cannot create world-layer invalidations or advance the world revision. The prototype produces only a moved-entity count; no entity change set, event stream, entity revision, or per-entity event allocation exists.
 
-The pass uses `get_dense_count()` plus direct dense ID/position access instead of allocating full-store snapshots each tick. Stable entity IDs are identity; dense indices are ephemeral storage positions. A dense index may change after swap-remove and cannot be persisted as identity. Faz 3B performs no create/remove during movement, so the dense layout remains stable for the duration of each pass. If lifecycle mutation and iteration later share a tick, that contract must be revisited.
+The pass uses `LivingStateStore.get_dense_count()` plus direct dense ID access instead of allocating full-store snapshots each tick. Positions remain core `EntityStore` data. Stable entity IDs are identity; dense indices in either store are ephemeral storage positions. A dense index may change after swap-remove and cannot be persisted as identity. Faz 3C performs no create/remove during movement, so the living dense layout remains stable for the duration of each pass. If lifecycle mutation and iteration later share a tick, that contract must be revisited.
 
 High-frequency systems should avoid repeated full-store snapshots and redundant coordinate transforms while preserving authoritative encapsulation. The safe `WorldGrid.get_terrain()` path therefore computes its chunk coordinate once, derives the local coordinate from it, and still delegates to `WorldChunkData` validation; no unchecked storage API is exposed.
 
 Decisions use stable ID plus tick, never dense index or global RNG, so different dense ordering and render-frame schedules preserve per-identity results. Main processes all due simulation ticks, accumulates whether any entity moved, and refreshes presentation once at frame end rather than once per catch-up tick.
 
-WATER blocking belongs only to this prototype behavior; it is not a world-level passability rule or a universal species constraint. Multiple entities may occupy the same logical cell. Sub-cell positions, movement speed, terrain costs, swimming/flying, collision, occupancy, interpolation, targets, navigation, and pathfinding remain undecided and unimplemented.
+WATER blocking belongs only to this prototype behavior; it is not a world-level passability rule or a universal species constraint. Living membership does not mean every future living category walks: rooted life, swimmers, flyers, riders, vehicles, and terrain-dependent movement remain separate future capabilities. Multiple entities may occupy the same logical cell. Sub-cell positions, movement speed, terrain costs, collision, occupancy, interpolation, targets, navigation, and pathfinding remain undecided and unimplemented.
 
 ## Current project structure
 
@@ -228,7 +247,7 @@ WATER blocking belongs only to this prototype behavior; it is not a world-level 
 - `scripts/generation/`: deterministic initial-data producer and data-only fingerprint helper.
 - `scripts/simulation/`: data-only fixed-step simulation clock.
 - `scripts/simulation/prototype_entity_movement.gd`: stateless cardinal one-cell prototype movement pass.
-- `scripts/entities/`: minimal authoritative stable-ID and logical-position store.
+- `scripts/entities/`: generic authoritative stable-ID/position storage and separate optional living-state storage.
 - `scripts/presentation/`: replaceable palette, rasterization, chunk rendering, inspection, and preview-fixture code.
 - `tests/world_data_test.gd`: headless data-only contract tests.
 - `tests/terrain_visualization_test.gd`: headless image/presentation contract tests.
@@ -238,6 +257,7 @@ WATER blocking belongs only to this prototype behavior; it is not a world-level 
 - `tests/world_generation_test.gd`: headless seed, RNG isolation, fingerprint, bounds, chunk-independence, and initialization-batch tests.
 - `tests/simulation_clock_test.gd`: headless fixed-step accumulation, catch-up, schedule-equivalence, and revision-independence tests.
 - `tests/entity_store_test.gd`: headless lifecycle, bounds, stable-ID, swap-remove, stale-ID, and snapshot tests.
+- `tests/living_state_store_test.gd`: headless optional membership, age derivation, heterogeneity, ownership, and swap-remove tests.
 - `tests/debug_entity_renderer_test.gd`: headless copied-snapshot and no-per-entity-Node presentation tests.
 - `tests/entity_movement_test.gd`: headless deterministic movement, terrain/bounds, dense-order, render-schedule, and refresh-coalescing tests.
 - `benchmarks/world_data_sanity.gd`: small non-gating baseline workload.
@@ -249,4 +269,4 @@ WATER blocking belongs only to this prototype behavior; it is not a world-level 
 
 ## Validation guardrails
 
-`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and ten separate suites: world data, terrain visualization, world change sets, layer extensibility, elevation visualization, generation, simulation clock, entity store, debug entity rendering, and deterministic movement. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.
+`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and eleven separate suites: world data, terrain visualization, world change sets, layer extensibility, elevation visualization, generation, simulation clock, entity store, living state, debug entity rendering, and deterministic movement. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.

@@ -12,6 +12,7 @@ const DEBUG_ENTITY_PLACEMENT_STRIDE: int = 1_973
 
 var _world_grid: WorldGrid
 var _entity_store: EntityStore
+var _living_state_store: LivingStateStore
 var _simulation_clock: SimulationClock
 var _entity_movement: PrototypeEntityMovement
 var _debug_probe_step: int = 0
@@ -33,6 +34,7 @@ func _ready() -> void:
 	_elevation_overlay.set_world_grid(_world_grid)
 	_elevation_overlay.rebuild_all()
 	_entity_store = EntityStore.new(_world_grid.get_world_size())
+	_living_state_store = LivingStateStore.new(_entity_store)
 	_populate_debug_entities()
 	_debug_entity_renderer.set_entity_store(_entity_store)
 	_debug_entity_renderer.refresh_from_store()
@@ -42,11 +44,12 @@ func _ready() -> void:
 	_last_change_set = initial_change_set
 	_update_change_summary(initial_change_set)
 	print(
-		"Semarel preview ready: %d terrain + %d elevation chunk visuals; %d debug entities"
+		"Semarel preview ready: %d terrain + %d elevation chunk visuals; %d entities; %d living"
 		% [
 			_terrain_renderer.get_chunk_visual_count(),
 			_elevation_overlay.get_chunk_visual_count(),
 			_entity_store.get_entity_count(),
+			_living_state_store.get_living_count(),
 		],
 	)
 
@@ -63,6 +66,7 @@ func _process(delta: float) -> void:
 		_last_moved_entity_count = _entity_movement.step(
 			_world_grid,
 			_entity_store,
+			_living_state_store,
 			_last_movement_tick,
 		)
 		frame_moved_entity_count += _last_moved_entity_count
@@ -117,7 +121,8 @@ func _populate_debug_entities() -> void:
 		var cell_index := (start_index + visited_count * DEBUG_ENTITY_PLACEMENT_STRIDE) % total_cell_count
 		var cell_position := Vector2i(cell_index % world_size.x, floori(float(cell_index) / world_size.x))
 		if _world_grid.get_terrain(cell_position) != TerrainTypes.Id.WATER:
-			_entity_store.create_entity(cell_position)
+			var entity_id := _entity_store.create_entity(cell_position)
+			_living_state_store.add_living_state(entity_id, 0)
 
 
 func _update_change_summary(change_set: WorldChangeSet) -> void:
@@ -128,8 +133,12 @@ func _update_change_summary(change_set: WorldChangeSet) -> void:
 		+ "seed: %d | generator: %d\n" % [DEBUG_WORLD_SEED, WorldGenerator.GENERATOR_VERSION]
 		+ "world revision: %d | simulation tick: %d\n"
 		% [_world_grid.get_revision(), _simulation_clock.get_tick_index()]
-		+ "simulation: %.1f Hz | entities: %d\n"
-		% [_simulation_clock.get_tick_rate(), _entity_store.get_entity_count()]
+		+ "simulation: %.1f Hz | entities: %d | living: %d\n"
+		% [
+			_simulation_clock.get_tick_rate(),
+			_entity_store.get_entity_count(),
+			_living_state_store.get_living_count(),
+		]
 		+ "movement tick: %d | moved: %d\n"
 		% [_last_movement_tick, _last_moved_entity_count]
 		+ "last change-set revision: %d\n" % change_set.get_revision()

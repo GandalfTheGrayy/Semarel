@@ -8,6 +8,7 @@
 - Semarel may draw high-level inspiration from the genre but must have its own systems, mechanics, visual language, and identity.
 - Godot 4.x Standard and GDScript are the implementation stack.
 - Authoritative world state is independent from rendering.
+- The simulated world may contain heterogeneous living and non-living entity categories. An entity is not inherently a character, NPC, or living creature.
 
 ## Prototype implementation, not final design
 

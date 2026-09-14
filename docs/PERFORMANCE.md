@@ -191,12 +191,32 @@ godot --headless --path . --script res://benchmarks/entity_movement_profile.gd
 
 The remaining known cost is that safe world terrain access is still the largest isolated component in this synthetic loop. That observation does not justify breaking encapsulation or claiming a production population limit; it should be revisited only when a more representative simulation workload exists.
 
+## Faz 3C optional living-membership sanity
+
+This is one local heterogeneous-state boundary measurement, not a performance target, supported-population claim, production tick budget, or CI threshold.
+
+| Field | Measured value |
+| --- | --- |
+| Date | 2026-09-15 |
+| Build | Godot Standard 4.7.2 stable, debug/editor binary |
+| Workload | 10,000 core entities, all with living state, on a 256×256 all-LAND world for 100 deterministic movement ticks |
+| Stored living data | Stable entity ID + `birth_tick`; age derived on demand |
+| Total movement time | 5,719.269 ms |
+| Average | 57.193 ms/tick |
+| Total moved | 1,000,000 |
+| Final checksum | 1,559,308,248 |
+| World revision | 0 |
+
+The closest previous reference is the Faz 3B.1 corrected five-run median of 5,239.395 ms. This Phase 3C sample is 479.874 ms, or 9.16%, higher, but it is one run compared with an earlier median and the workload now includes the required living-membership layer. It is descriptive evidence only. The result is not a catastrophic 2×/3× regression, so no optimization task was opened.
+
+The development profile measured 443.232 ms for living dense-ID/hash work, 473.398 ms for core position reads, 1,909.561 ms for safe terrain reads, 760.303 ms for writes, and 5,618.041 ms for the full movement loop. Safe terrain access remains the largest isolated component. The benchmark keeps all 10,000 entities living so it measures the same movement volume as earlier phases; it does not represent non-living exclusion ratios or complete NPC behavior.
+
 ## Metrics not yet represented
 
 | Metric | Current value |
 | --- | --- |
 | NPC count | No NPC model; 32 moving debug entities in preview and separate 10,000-row data/movement sanity workloads only |
-| Simulation tick time | 52.394 ms/tick corrected local median for the isolated Faz 3B.1 10,000-entity minimal movement workload |
+| Simulation tick time | 57.193 ms/tick in one Faz 3C run of the 10,000-core/10,000-living minimal movement workload; 52.394 ms/tick remains the earlier Faz 3B.1 corrected median |
 | Render FPS | Not measured |
 | Frame time | Not measured |
 | Memory use | Not measured |

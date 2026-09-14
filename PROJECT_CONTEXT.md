@@ -15,8 +15,8 @@
 - **Faz 2B – First Coherent Seeded World Prototype** is complete, pushed, and validated on `main` at `58b4de7557713ab629959e5e75f9139d4c1f11be`.
 - **Faz 3A – Simulation Clock & Minimal Entity Foundation** is complete, pushed, and validated on `main` at `0bae4f5e314ace45f9354d38f1a035be292a3e5a`.
 - **Faz 3B.1 – Movement Hot-Path Diagnosis & Bounded Correction** is complete, pushed, and validated on `main` at `10f90a059f93d054e0e896977518822bb8b331bf`.
-- Current completed phase: **Faz 3C – Heterogeneous Entity State Boundary & First Living-State Slice**.
-- Next step: **Planning Checkpoint – Domain-Specific Entity Systems**. User consultation is required before selecting a new gameplay/content domain.
+- Current completed phase: **Faz 3D – Stable Entity Lifecycle Transition**.
+- Next proposed checkpoint: **Faz 3E – Stable Cross-Entity Reference Slice**. It is not implemented; its real relationship must be selected from repository and product requirements before work begins.
 
 ## Implemented systems
 
@@ -48,6 +48,9 @@
 - `EntityStore` owns minimal entity identity and logical cell position in dense packed columns: stable IDs in `PackedInt64Array`, x/y in separate `PackedInt32Array` values, plus one ID-to-dense-index lookup.
 - Entity IDs begin at 1, increase monotonically, are never reused, and remain distinct from swap-remove dense indices.
 - `LivingStateStore` is an optional state owner bound to one `EntityStore`; it stores living-member IDs and immutable `birth_tick` values in `PackedInt64Array` columns and derives age on demand.
+- `RemainsStateStore` is a separate optional state owner bound to one `EntityStore`; it stores stable member IDs and `death_tick` values in dense `PackedInt64Array` columns.
+- `PrototypeLifecycleTransition` changes a valid living entity into remains by attaching Remains state and removing Living state while preserving the same core entity ID and logical position.
+- Failed lifecycle transitions validate before mutation; an unexpected living-removal failure rolls the just-added remains row back, preventing a half-transition.
 - Generic entities need no living row. Removing living state preserves the core entity; the orchestration owner removes optional rows before core identity when destroying an entity.
 - `DebugEntityRenderer` draws copied entity positions from one `Node2D`; the 32-entity preview creates no per-entity Nodes and refreshes at most once after all due ticks in a render frame.
 - A non-gating 10,000-entity create/read-update/remove sanity workload exists at `benchmarks/entity_store_sanity.gd`.
@@ -80,14 +83,18 @@
 - Terrain and elevation are related through the generator-v2 prototype height field. This relationship belongs to the replaceable v2 algorithm and is not a global `WorldGrid` invariant.
 - Generation writes through the public `WorldGrid` API and leaves pending changes for the owner/orchestrator to commit once. Runtime authoritative ownership remains exclusively with `WorldGrid`.
 - Generation is new-world initialization, not ongoing climate, erosion, ecosystem, or other runtime simulation.
-- Environment state, core entity state, optional living state, simulation time, and presentation have separate owners: `WorldGrid`, `EntityStore`, `LivingStateStore`, `SimulationClock`, and renderer Nodes respectively.
+- Environment state, core entity state, optional living/remains state, simulation time, and presentation have separate owners: `WorldGrid`, `EntityStore`, `LivingStateStore`/`RemainsStateStore`, `SimulationClock`, and renderer Nodes respectively.
 - `EntityStore` validates logical world bounds but deliberately knows nothing about living status, terrain, rendering, behavior, types, health, AI, or navigation. A core entity is not inherently living, an NPC, or an agent.
 - `LivingStateStore` validates core identity on attachment but does not own IDs or positions. Age is `current_tick - birth_tick`, not mutable per-tick state.
+- `RemainsStateStore` validates core identity on attachment but owns only `death_tick`; it does not duplicate `birth_tick`, own positions, or imply a final corpse system.
+- Living-to-remains is an optional-state transition, not entity replacement. The same stable core ID and position persist, while this specific pair remains exclusive through the transition API.
+- Optional state stores are composable state slices rather than one global type system. Generic-only, living, and remains entities can coexist in one `EntityStore`; no `EntityType` enum, ECS/component registry, or generic state machine exists.
 - Optional-state removal does not cascade into core removal. The main/orchestration layer owns cleanup ordering; Faz 3C adds no event bus, coordinator, registry, or ECS.
 - Entity removal uses swap-remove and repairs the moved stable-ID mapping in constant time; stale IDs are rejected safely.
 - `SimulationClock.add_time()` rejects negative deltas, accumulates non-negative render delta, and exposes every due fixed tick through `consume_tick()`. Large-frame catch-up currently processes all due ticks; a production overload cap remains undecided.
 - Stable entity IDs are identity; dense indices are ephemeral storage positions that may change after swap-remove and must not be retained across lifecycle changes.
 - Movement iterates the living-state dense membership without full-store snapshots, resolves positions through the core store, and performs no create/remove, so the dense layout stays fixed during each pass.
+- Removing Living state during the lifecycle transition naturally removes the entity from later movement passes; movement contains no Remains-specific branch.
 - Direction decisions depend on stable ID and tick rather than dense order. Global RNG activity and render-frame schedule do not affect final positions for the same tick sequence.
 - The main preview processes every due movement tick, then refreshes entity presentation once only if at least one entity moved.
 - Entity movement does not mutate `WorldGrid` or advance its revision. It has no entity revision or change-set framework because no second entity-state consumer requires one yet.
@@ -108,12 +115,13 @@
 - The current 10 Hz clock and logical-cell entity positions are engineering prototype contracts, not final simulation-rate or movement-scale decisions.
 - `EntityStore` is a minimal data owner, not an ECS framework or final entity model.
 - Optional living membership is the first heterogeneous-state proof. It does not imply that every living category walks or that species, health, needs, death, reproduction, or character systems have been designed.
+- Faz 3D Remains state is only a post-living tick record. It adds no corpse presentation, decay, loot, history, cross-entity relationships, save/load, or data-driven definition system.
 - Cardinal one-cell movement, prototype WATER blocking, lack of occupancy, and allowing multiple entities in one cell are temporary Faz 3B contracts, not universal species or final movement rules.
 - Semarel may take high-level inspiration from emergent sandbox simulations, but its systems, mechanics, identity, and visual language must be original.
 
 ## Open decisions
 
-Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, simulation tick rate/catch-up policy, final entity schema, species, health, needs, death/lifecycle rules, sub-cell movement/speed, terrain costs, swimming/flying, occupancy/collision, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
+Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, simulation tick rate/catch-up policy, final entity schema, species, health, needs, death/corpse/lifecycle rules, cross-entity relationship slice, sub-cell movement/speed, terrain costs, swimming/flying, occupancy/collision, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
 
 ## Verified development tools
 

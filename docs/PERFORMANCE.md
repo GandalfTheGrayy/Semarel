@@ -1,5 +1,9 @@
 # Performance
 
+## Faz 3D lifecycle transition note
+
+The living-to-remains transition is an occasional data-only operation over two dense optional stores. Once Living membership is removed, the entity disappears from the existing movement iteration automatically; no remains lookup or branch was added to the per-tick movement hot loop. No new benchmark or performance threshold was introduced for this narrow slice.
+
 ## Faz 1A data sanity baseline
 
 This is a small data-layout sanity measurement, not a performance target, optimization claim, or CI pass/fail threshold.

@@ -60,7 +60,7 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Interactive OpenGL inspection confirmed visible terrain, correct debug colors, gap-free chunk joins, sharp nearest-neighbor scaling, correct cell/chunk/local data, and explicit outside-world reporting.
 - Added explicit workflow wiring for the repository-scoped `${{ github.token }}` while retaining `contents: read`, retries, and SHA-256 verification.
 - Production art, procedural generation, gameplay mutation, navigation, NPCs, and Faz 1C propagation remained out of scope.
-- GitHub Actions validation passed for the implementation commit.
+- GitHub Actions validation passed for the implementation commit (Validate run `34909162583`).
 - Unresolved issues: none in the implemented Faz 1B scope.
 - Commit: `e1a4c0a1fb48f01d17f1ccd90a66129ece08d030` (`feat: add terrain visualization and inspection`).
 
@@ -199,4 +199,19 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Updated the 10,000-entity/100-tick all-LAND benchmark so all core entities have living state. The final run measured 5,719.269 ms total (57.193 ms/tick), 1,000,000 moves, checksum `1559308248`, and world revision zero. This is 9.16% above the earlier corrected median, not a catastrophic 2×/3× regression, and creates no supported-population or optimization claim.
 - The requested Windows interactive capture was attempted against the detected `Semarel (DEBUG)` window, but the capture helper failed twice with `SetIsBorderRequired failed: No such interface supported (0x80004002)`. No unreliable UI input was sent. The headless main-scene smoke and focused suites covered 32 core/32 living startup, deterministic movement, tick/revision separation, overlay/change paths, and the single-renderer/no-child-entity-node contracts.
 - Updated architecture, design, context, performance, next-step, and task-history documentation. Work stops at **Planning Checkpoint – Domain-Specific Entity Systems**; the next domain requires user consultation.
-- Commit subject: `feat: establish optional living entity state` (exact hash will be backfilled by the next context-maintenance task).
+- GitHub Actions validation passed for the implementation commit.
+- Commit: `9c4bef6ed63b08933c8b5f25edd11b63588f1fa8` (`feat: establish optional living entity state`).
+
+## 2026-09-15 — Faz 3D: Stable Entity Lifecycle Transition
+
+- Added a data-only `RemainsStateStore` bound to one `EntityStore`, with dense packed stable-ID/death-tick columns, safe invalid reads, duplicate/stale rejection, and swap-remove mapping repair.
+- Added a narrow `PrototypeLifecycleTransition` that validates core identity, non-negative simulation death tick, living/remains membership, and store bindings before attaching Remains state and removing Living state. An unexpected removal failure rolls back the new row.
+- Proved that the transition preserves the same core ID, core count, and logical position; the Living birth row becomes unavailable and only the Remains death tick is retained.
+- Proved three coexisting shapes in one core store: one living entity, one remains entity, and one generic entity with neither optional row.
+- Proved that movement stops naturally after Living membership removal without adding a Remains-specific branch or lookup to the movement hot loop.
+- Kept Remains as a post-living prototype marker only. No global entity type, ECS/component registry, generic state machine, corpse presentation/gameplay, history store, cross-entity relation graph, data-definition loader, or save/load system was added.
+- Updated future constraints, architecture, game-design boundaries, performance notes, project context, and the proposed Faz 3E checkpoint.
+- Standard validation passed all 12 suites with 885 assertions; the new lifecycle-transition suite contributed 89 assertions and the unchanged preview smoke reported 16 terrain visuals, 16 elevation visuals, 32 core entities, and 32 living entities.
+- A visible non-headless `Semarel (DEBUG)` preview process opened successfully. This session exposed no native Computer Use surface, so pixel-level interactive inspection and reliable SPACE/E input injection could not be performed; no unreliable UI input was sent, and the existing headless runtime plus focused suites covered those unchanged paths.
+- Unresolved issues: none in the implemented lifecycle slice. The existing synthetic movement diagnosis still identifies safe terrain access as its largest isolated component; the unavailable native capture surface is a validation-environment limitation, not a project defect.
+- Commit subject: `feat: add stable lifecycle state transition` (exact hash will be backfilled by the next context-maintenance task).

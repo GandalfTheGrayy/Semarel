@@ -201,6 +201,7 @@ EntityStore
 
 Optional state stores
   LivingStateStore: living members only + birth_tick
+  RemainsStateStore: post-living prototype members only + death_tick
 
 EntityStore entity
   may have LivingState
@@ -209,6 +210,30 @@ EntityStore entity
 ```
 
 Removing living state does not remove the core entity. The orchestration owner must remove optional state before removing the core entity when destroying an entity. Faz 3C deliberately adds no event bus, lifecycle coordinator, component registry, or ECS. Future building, inventory, combat, or other domain data may use separate optional owners if their actual requirements justify that structure.
+
+## Stable prototype lifecycle transition
+
+`RemainsStateStore` is another optional owner bound to one `EntityStore`. It uses dense `PackedInt64Array` columns for stable entity IDs and `death_tick`, plus a stable-ID-to-dense-index lookup. `death_tick` is a `SimulationClock` tick index, not a world revision or a real-time unit. The store does not own core identity, position, terrain, presentation, birth state, corpse behavior, or history.
+
+```text
+EntityStore
+   entity 42 (stable ID + logical position)
+      |
+      |-- before: LivingState (birth_tick)
+      |
+      `-- after:  RemainsState (death_tick)
+
+stable core ID and position remain
+optional state transition != entity replacement
+```
+
+`PrototypeLifecycleTransition.transition_to_remains()` checks core existence, non-negative death tick, living membership, absence of remains membership, and both optional stores' binding before mutation. It then attaches remains state and removes living state; an unexpected removal failure rolls the new remains row back. It never deletes or creates a core entity, so the stable ID and logical position remain unchanged. The Living/Remains pair is mutually exclusive through this prototype transition contract.
+
+Optional state stores describe capabilities or state slices. They do not define one exclusive global entity type, and an entity may carry multiple unrelated optional states. This phase therefore adds no `EntityType` enum, component mask, archetype, generic state machine, or ECS registry. A generic core entity may carry neither Living nor Remains state.
+
+Movement already iterates Living membership. Removing that row naturally excludes a transitioned entity from later movement passes without a Remains-specific condition or hot-loop cost. Birth data is not copied into Remains; after transition, living age queries are invalid by contract. Durable lifecycle history is a separate future concern.
+
+Stable-ID-preserving changes may later model cases such as construction to completed building or ground item to inventory-owned item, as well as living to remains. Only living to remains is implemented here; the other examples are not approved systems.
 
 `DebugEntityRenderer` is one presentation `Node2D` that copies logical positions only on explicit refresh and draws all markers in one `_draw()` pass. Thirty-two deterministic non-water positions make the preview inspectable; there is no Node per entity and the renderer never owns entity data.
 

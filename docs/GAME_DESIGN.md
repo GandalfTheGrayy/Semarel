@@ -30,6 +30,8 @@ Faz 3A's 10 Hz fixed clock, 32 stationary debug markers, logical-cell positions,
 
 Faz 3B's deterministic cardinal movement, maximum one logical cell per tick, prototype WATER blocking, and lack of occupancy are a test behavior for generic debug entities. They do not imply that final agents cannot swim, fly, sail, share cells, use sub-cell positions, move at varied speeds, pay terrain costs, animate between cells, collide, or navigate toward goals.
 
+Faz 3D's `RemainsState` means only that a core entity stopped being living at a simulation tick while retaining its stable identity and position. It is an architecture probe, not final death or corpse gameplay; decay, skeletons, loot, burial, resurrection, decomposition, smell, disease, scavengers, and remains presentation remain undesigned and unimplemented.
+
 ## Proposed / undecided
 
 Long-term candidates include procedural world generation, mutable terrain, elevation, climate, moisture, destruction, fire and environmental simulation, vegetation, animals, large NPC populations, needs and jobs, settlements, cities, kingdoms, diplomacy, war, buildings, economy, character animation, pixel particles, weather, disasters, magic or special world effects, save/load, and thousands of simulated entities.

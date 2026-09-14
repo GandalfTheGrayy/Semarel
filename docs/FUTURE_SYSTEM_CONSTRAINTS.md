@@ -10,6 +10,16 @@ Living-world capability targets include birth, growth, aging, death, lifecycle, 
 
 Movement capability targets include walking, swimming, flying, riding, vehicles, and terrain-dependent movement. No single membership category should permanently imply one movement capability.
 
+## Entity composition, identity, and persistence
+
+- One entity may carry multiple independent optional state slices at the same time.
+- Optional state may be attached or detached at runtime, and a form or lifecycle transition may preserve the same stable core entity ID.
+- Future state may reference other entities by stable ID. The model should support preserving those references across save/load without silently retargeting them.
+- Entity definitions should remain open to future data-driven and moddable content rather than requiring one closed entity-type enum.
+- The disappearance of an important entity may later emit durable history or event records without requiring that entity's runtime state to remain alive.
+
+These are capability constraints only. Faz 3D implements only the narrow living-to-remains transition; cross-entity references, serialization, definition/mod loading, and historical-event systems are not approved or implemented by this document.
+
 ## Constructed, political, and economic worlds
 
 The architecture should leave room for buildings and their construction, damage, and destruction; villages, cities, and capitals; ownership and borders; kingdoms or states; leaders; diplomacy; alliances; wars; rebellion; conquest; and other political processes.

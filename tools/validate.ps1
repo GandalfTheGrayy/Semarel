@@ -96,6 +96,8 @@ $requiredFiles = @(
     'scripts\world\world_chunk_data.gd',
     'scripts\world\world_change_set.gd',
     'scripts\world\world_grid.gd',
+    'scripts\generation\world_generator.gd',
+    'scripts\generation\world_fingerprint.gd',
     'scripts\presentation\world_presentation_config.gd',
     'scripts\presentation\elevation_rasterizer.gd',
     'scripts\presentation\elevation_overlay_renderer.gd',
@@ -109,6 +111,9 @@ $requiredFiles = @(
     'tests\world_change_set_test.gd',
     'tests\world_layer_extensibility_test.gd',
     'tests\elevation_visualization_test.gd',
+    'tests\world_generation_test.gd',
+    'benchmarks\world_generation_sanity.gd',
+    'docs\PLANNING_GUARDRAILS.md',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
     'AGENTS.md'
@@ -256,6 +261,25 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $elevationVisualization
     }
 } else {
     Write-Fail 'Elevation visualization tests' 'test script or Godot executable is missing'
+}
+
+$worldGenerationTest = Join-Path $repositoryRoot 'tests\world_generation_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $worldGenerationTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/world_generation_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^WORLD_GENERATION_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'World generation tests' 'headless deterministic generation suite completed'
+    } else {
+        Write-Fail 'World generation tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'World generation tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

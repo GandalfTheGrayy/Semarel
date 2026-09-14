@@ -133,21 +133,50 @@ The SPACE-key debug change probe is development validation, not runtime terrain-
 
 Some implementation repetition is now visible between the two explicit chunk renderers. A generic renderer abstraction will be reconsidered only when a third real presentation layer exists or this repetition creates a demonstrated maintenance problem. Faz 1E does not introduce a renderer registry, layer mode, or map-mode framework.
 
+## New-world generation boundary
+
+```text
+NEW WORLD CREATION
+
+world size + chunk size + explicit seed
+        ↓
+WorldGenerator version 1
+        ↓ writes initial logical terrain/elevation values
+WorldGrid
+        ↓ owner/orchestrator calls commit_changes()
+Initial WorldChangeSet
+        ↓
+Presentation / future consumers
+```
+
+`WorldGenerator` is a producer; `WorldGrid` remains the authoritative runtime owner. The generator receives a target grid for one call, writes only through its public coordinate APIs, retains no world reference or mutable run state, and does not commit, render, or access the scene tree. The caller decides when initialization is complete and commits the accumulated terrain/elevation invalidations as one batch.
+
+Generation uses an explicit integer seed and a fresh local `RandomNumberGenerator`. Two salt values are drawn locally, after which prototype terrain regions and elevation bytes are derived from logical world coordinates. Global RNG use elsewhere cannot perturb output. The algorithm iterates world coordinates and never reads chunk coordinates, so changing only the chunk partition preserves identical logical values and creates no chunk-boundary generation seams.
+
+`WorldGenerator.GENERATOR_VERSION = 1` identifies the current deterministic algorithm. This is a small future-facing identifier, not a save compatibility framework. The fixed preview seed `12345`, version, region size, terrain proportions, and elevation formula are development probe values rather than final game rules.
+
+`WorldFingerprint` reads authoritative terrain/elevation in stable row-major logical order and produces separate and combined non-cryptographic checksums. It exists for reproducibility tests and diagnostics, contains no presentation data, and does not make the generated algorithm final.
+
+`WorldPreviewFixture` remains a presentation-test fixture for known pixel expectations. It is distinct from `WorldGenerator`, which initializes the main preview and proves the production-facing ownership boundary. Generation means new-world creation; it is not runtime simulation and does not stand in for future climate, erosion, ecosystems, resources, or other ongoing systems.
+
 ## Current project structure
 
 - `project.godot`: Godot project identity and pixel-art-friendly rendering defaults.
 - `scenes/main.tscn`: minimal `Main -> World` bootstrap scene.
-- `scripts/main.gd`: small world setup and Faz 1C debug-change orchestration.
+- `scripts/main.gd`: small seeded world initialization and debug-change orchestration.
 - `scripts/world/`: authoritative world data classes.
+- `scripts/generation/`: deterministic initial-data producer and data-only fingerprint helper.
 - `scripts/presentation/`: replaceable palette, rasterization, chunk rendering, inspection, and preview-fixture code.
 - `tests/world_data_test.gd`: headless data-only contract tests.
 - `tests/terrain_visualization_test.gd`: headless image/presentation contract tests.
 - `tests/world_change_set_test.gd`: headless revision, immutability, ordering, multi-consumer, and incremental-refresh contract tests.
 - `tests/world_layer_extensibility_test.gd`: headless two-layer storage, bounds, change-category, revision, stability, and renderer-independence tests.
 - `tests/elevation_visualization_test.gd`: headless grayscale, overlay lifecycle, alignment, partial-edge, category-isolation, fixture, and inspector tests.
+- `tests/world_generation_test.gd`: headless seed, RNG isolation, fingerprint, bounds, chunk-independence, and initialization-batch tests.
 - `benchmarks/world_data_sanity.gd`: small non-gating baseline workload.
+- `benchmarks/world_generation_sanity.gd`: one small non-gating generated-world baseline workload.
 - `tools/validate.ps1`: local and CI validation entry point.
 
 ## Validation guardrails
 
-`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and five separate world-data, terrain-visualization, world change-set, world-layer-extensibility, and elevation-visualization suites. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.
+`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and six separate world-data, terrain-visualization, world change-set, world-layer-extensibility, elevation-visualization, and deterministic-generation suites. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.

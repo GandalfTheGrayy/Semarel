@@ -49,6 +49,31 @@ The measurement is a single local run and is hardware-dependent. Future comparis
 - Category-specific tests confirm that terrain-only batches skip elevation texture refresh and elevation-only batches skip terrain texture refresh.
 - No FPS target, numeric rendering benchmark, optimization claim, or CI performance threshold was introduced.
 
+## Faz 2A generation sanity baseline
+
+This is one local data-generation sanity measurement, not a performance target, optimization claim, or CI threshold.
+
+| Field | Measured value |
+| --- | --- |
+| Date | 2026-09-14 |
+| Build | Godot Standard 4.7.2 stable, debug/editor binary |
+| Workload | Create a 256×256 world, generate terrain and elevation with seed `12345`, then commit one initial batch |
+| Generator version | 1 |
+| Chunk layout | 64×64 cells; 4×4 chunks; 65,536 logical cells |
+| Generation | 527.994 ms |
+| Initial change set | revision 1; 16 terrain chunks; 16 elevation chunks |
+| Terrain fingerprint | 451630829 |
+| Elevation fingerprint | 1135444898 |
+| Combined fingerprint | 1217889498 |
+
+Command:
+
+```powershell
+godot --headless --path . --script res://benchmarks/world_generation_sanity.gd
+```
+
+The measurement is hardware-dependent and includes ordinary `WorldGrid.set_*` validation/change tracking for each logical cell. It does not justify optimization or define production-generation performance. Future comparisons should use the same seed, generator version, world size, build, and workload.
+
 ## Metrics not yet represented
 
 | Metric | Current value |

@@ -1,5 +1,7 @@
 extends Node
 
+const DEBUG_WORLD_SEED: int = 12_345
+
 @onready var _terrain_renderer: TerrainRenderer = $World/TerrainRenderer
 @onready var _elevation_overlay: ElevationOverlayRenderer = $World/ElevationOverlayRenderer
 @onready var _world_inspector: WorldInspector = $DebugUI/WorldInspector
@@ -16,7 +18,7 @@ func _ready() -> void:
 		WorldGrid.DEFAULT_CHUNK_SIZE,
 		TerrainTypes.Id.WATER,
 	)
-	WorldPreviewFixture.apply_to(_world_grid)
+	WorldGenerator.new().generate_into(_world_grid, DEBUG_WORLD_SEED)
 	var initial_change_set := _world_grid.commit_changes()
 	_terrain_renderer.set_world_grid(_world_grid)
 	_terrain_renderer.rebuild_all()
@@ -71,6 +73,8 @@ func _update_change_summary(change_set: WorldChangeSet) -> void:
 	_change_summary.text = (
 		"SPACE: apply debug change batch\n"
 		+ "E: elevation overlay (%s)\n" % overlay_state
+		+ "seed: %d\n" % DEBUG_WORLD_SEED
+		+ "generator version: %d\n" % WorldGenerator.GENERATOR_VERSION
 		+ "world revision: %d\n" % _world_grid.get_revision()
 		+ "last change-set revision: %d\n" % change_set.get_revision()
 		+ "last changed terrain chunks: %d\n" % change_set.get_terrain_chunk_count()

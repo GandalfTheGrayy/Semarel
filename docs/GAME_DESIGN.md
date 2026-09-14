@@ -21,6 +21,8 @@ Faz 1D's prototype elevation byte layer exists only to prove multi-layer world-d
 
 Faz 1E's grayscale gradient, semi-transparent overlay, `E` toggle, and unitless inspector value are debug presentation choices. They do not establish final elevation art, map modes, UI, physical units, or gameplay meaning.
 
+Faz 2A's generator version `1`, fixed preview seed `12345`, block-like prototype regions, terrain proportions, and elevation byte formula exist only to prove deterministic initialization and ownership boundaries. They do not define final world shape, terrain/elevation relationships, biome logic, naturalism, default seed, or production generation.
+
 ## Proposed / undecided
 
 Long-term candidates include procedural world generation, mutable terrain, elevation, climate, moisture, destruction, fire and environmental simulation, vegetation, animals, large NPC populations, needs and jobs, settlements, cities, kingdoms, diplomacy, war, buildings, economy, character animation, pixel particles, weather, disasters, magic or special world effects, save/load, and thousands of simulated entities.

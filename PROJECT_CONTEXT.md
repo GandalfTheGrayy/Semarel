@@ -10,8 +10,9 @@
 - **Faz 1B – Terrain Visualization & World Inspection** is complete, pushed, and validated on `main`.
 - **Faz 1C – Generic World Change Propagation & Incremental Refresh** is complete, pushed, and validated on `main`.
 - **Faz 1D – Second Logical World Layer Extensibility Probe** is complete, pushed, and validated on `main`.
-- Current completed phase: **Faz 1E – Secondary Layer Visualization & Inspection Probe**.
-- Next phase: **Faz 2A – Deterministic World Initialization & Generation Boundary**.
+- Faz 1A–1E foundation series is complete: authoritative data, chunking, multiple logical layers, committed change propagation, and independent presentation consumers are proven by code and tests.
+- Current completed phase: **Faz 2A – Deterministic World Initialization & Generation Boundary**.
+- Next proposed phase: **Faz 2B – Generation Output Structure & Layer Relationship Probe**; this remains subject to repository and product-direction review.
 
 ## Implemented systems
 
@@ -30,6 +31,9 @@
 - `WorldPresentationConfig` owns the shared prototype 2× presentation scale and debug overlay opacity without affecting world data.
 - `WorldInspector` reports read-only world, chunk, local, terrain, and unitless prototype elevation information under the mouse.
 - `WorldPreviewFixture` creates a deterministic debug island and simple elevation gradient solely for presentation verification; it is not production generation.
+- `WorldGenerator` is a scene-tree-independent initial-data producer with an explicit integer seed and version `1`; it does not own `WorldGrid`, commit revisions, render, or run as simulation.
+- `WorldFingerprint` computes deterministic terrain, elevation, and combined data-only checksums in logical world-coordinate order.
+- The main preview now generates its initial authoritative values with fixed debug seed `12345`, commits one initialization batch, and displays the seed/version for inspection.
 - The 256×256 preview produces 16 chunk visuals, not 65,536 cell Nodes.
 - Prototype elevation is a second independent byte-sized scalar layer with default value `0`; its range and physical/gameplay meaning are not final design decisions.
 - `WorldChangeSet` represents one committed world-change batch with a revision and separate, deterministically ordered terrain/elevation chunk invalidations.
@@ -55,6 +59,9 @@
 - The same immutable mixed `WorldChangeSet` can be observed independently by both renderers and debug UI.
 - All derived elevation images, textures, and sprites can be destroyed and rebuilt from copied `WorldGrid` data.
 - Old change sets remain stable after later world mutations and commits.
+- Generation uses a fresh local `RandomNumberGenerator` per call, then derives values from world coordinates; global RNG activity and chunk partitioning do not affect logical output.
+- Generation writes through the public `WorldGrid` API and leaves pending changes for the owner/orchestrator to commit once. Runtime authoritative ownership remains exclusively with `WorldGrid`.
+- Generation is new-world initialization, not ongoing climate, erosion, ecosystem, or other runtime simulation.
 
 ## Confirmed decisions
 
@@ -65,12 +72,13 @@
 - Cell data uses compact storage; there is no per-cell Node, Object, Dictionary, or Resource.
 - Prototype elevation is an architecture probe, not a final 8-bit elevation, sea-level, slope, mountain, hydrology, or gameplay system.
 - Grayscale elevation and 58% overlay opacity are debug presentation choices, not final art direction or a production map mode.
+- Generator version `1`, seed `12345`, region sizing, and the current terrain/elevation formulas are deterministic engineering-probe choices, not final world-generation or game-design rules.
 - World-change revisions identify committed non-empty batches only; they are not simulation ticks, save versions, or network sequence numbers.
 - Semarel may take high-level inspiration from emergent sandbox simulations, but its systems, mechanics, identity, and visual language must be original.
 
 ## Open decisions
 
-Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, climate simulation, generation algorithm, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
+Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
 
 ## Verified development tools
 
@@ -78,12 +86,13 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 
 ## Known problems and performance data
 
-- Known project problems: none in the implemented Faz 1A–Faz 1E scope after local and interactive validation.
-- One data-only baseline has been recorded in `docs/PERFORMANCE.md`; it is not a performance target or CI threshold.
-- Production terrain/elevation art, procedural generation, NPCs, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
+- Known project problems: none in the implemented Faz 1A–Faz 2A scope after local, automated, and interactive validation.
+- Data-only world access and generation sanity baselines are recorded in `docs/PERFORMANCE.md`; neither is a performance target or CI threshold.
+- Production-quality procedural generation, biomes, climate, hydrology, NPCs, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
 
 ## Repository rules
 
+- `docs/PLANNING_GUARDRAILS.md` is the persistent project-direction reference used alongside repository evidence when planning future phases; it does not replace `AGENTS.md`.
 - Treat current code, documentation, and Git history as the durable source of truth.
 - Preserve unrelated user work and inspect existing behavior before changing it.
 - Keep tasks scoped, test meaningful changes, update context/log/next documents, review diffs, commit, and push.

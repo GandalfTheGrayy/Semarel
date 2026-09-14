@@ -107,6 +107,22 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Interactive OpenGL checks confirmed overlay off/on behavior, unitless `elevation: 129` inspection, sharp aligned gradient rendering, gap-free chunk joins, and the existing SPACE terrain probe at revision 2 with zero elevation chunk invalidations.
 - Fixed the inspector/help layout overlap found during visual inspection and removed all temporary capture artifacts.
 - No elevation gameplay, generator, map-mode framework, shader, final art, biome, hydrology, navigation, or Faz 2A system was added.
-- Local parser/import, runtime smoke, and all five headless suites passed; post-push CI status is reported after the workflow is observed.
+- Local parser/import, runtime smoke, and all five headless suites passed.
+- GitHub Actions validation passed for the implementation commit.
 - Unresolved issues: none in the implemented Faz 1E scope.
-- Commit: `feat: visualize secondary world layer` (exact hash will be backfilled during the next context-maintenance task).
+- Commit: `e1e19f8ae64870a6330a3e508b9d48537b1e4f9e` (`feat: visualize secondary world layer`).
+
+## 2026-09-14 — Faz 2A: Deterministic World Initialization & Generation Boundary
+
+- Added concise persistent planning guardrails that keep future work aligned with Semarel's long-term living sandbox goal without replacing implementation rules in `AGENTS.md`.
+- Added a scene-tree-independent `WorldGenerator` that writes initial terrain and prototype elevation through `WorldGrid` using an explicit integer seed, generator version `1`, a fresh local RNG per call, and world-coordinate-derived values.
+- Kept generation as a temporary producer: it neither owns the target world nor commits revisions, renders, stores runtime state, or acts as simulation.
+- Added data-only terrain, elevation, and combined fingerprints evaluated in deterministic logical coordinate order.
+- Proved same-seed stability, different-seed variation, global RNG isolation, repeated-instance stability, valid values, bounds, 65×65 partial edges, chunk-size independence, lack of chunk seam dependency, and one-batch initialization semantics in a dedicated 53-assertion suite.
+- Switched the debug main preview from `WorldPreviewFixture` to fixed seed `12345` generation while retaining the fixture for focused presentation tests and displaying seed/version as development information.
+- Preserved the five existing suites (308 assertions); parser/import, runtime smoke, and all six headless suites pass through the single validation command.
+- Recorded a non-gating 256×256 generation sanity baseline in `docs/PERFORMANCE.md`; no CI timing threshold, optimization, threading, or production generator was added.
+- No biome, river, climate, resource, civilization, runtime simulation, world-creation UX, or save compatibility system was implemented.
+- Local validation and interactive preview inspection passed; post-push GitHub Actions status is reported after the workflow is observed.
+- Unresolved issues: none in the implemented Faz 2A scope.
+- Commit: `feat: establish deterministic world generation boundary` (exact hash will be backfilled during the next context-maintenance task).

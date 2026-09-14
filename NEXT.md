@@ -1,7 +1,9 @@
-# Faz 2A – Deterministic World Initialization & Generation Boundary
+# Faz 2B – Generation Output Structure & Layer Relationship Probe
 
-Introduce a small deterministic producer boundary for initial authoritative world data without turning generation into world ownership or runtime simulation.
+Evaluate the proven deterministic initialization output and test one small, explicit relationship between existing logical layers without treating the current generator as production-quality world generation.
 
-The next prototype should establish an explicit seed contract, verify that the same seed produces the same terrain/elevation output, and keep generation output separate from later runtime mutations and presentation.
+A likely focus is whether a minimal staged output rule can make terrain/elevation relationships inspectable while preserving explicit seeds, chunk-partition independence, `WorldGrid` ownership, one committed initialization batch, and presentation separation.
 
-Do not implement realistic terrain generation, biomes, climate, hydrology, gameplay, NPCs, save/load, networking, or other future systems merely because the generation boundary exists.
+Before implementation, reassess this proposal against the repository's actual state, `docs/PLANNING_GUARDRAILS.md`, and Semarel's long-term gameplay direction. `NEXT.md` is a planning proposal, not an automatic command.
+
+Do not expand this step into realistic biomes, rivers, climate, hydrology, resources, civilizations, runtime simulation, save/load, threading, or a generic generation-pipeline framework.

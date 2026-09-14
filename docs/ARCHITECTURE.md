@@ -167,6 +167,32 @@ The shared-height relation is specific to generator v2. It is not a `WorldGrid` 
 
 `WorldPreviewFixture` remains a presentation-test fixture for known pixel expectations. It is distinct from `WorldGenerator`, which initializes the main preview and produces the first spatially coherent debug world. Generation means new-world creation; it is not runtime simulation and does not stand in for future climate, erosion, ecosystems, resources, or other ongoing systems. Generator v2 is not the final procedural generator, biome model, elevation model, geology system, or hydrology system.
 
+## Simulation time and minimal entity state
+
+```text
+FRAME TIME                         AUTHORITATIVE OWNERS
+
+render delta                       WorldGrid
+    ↓                              └── environment layers + world revision
+SimulationClock (10 Hz prototype)
+    ↓ zero or more fixed ticks     EntityStore
+simulation tick index              └── stable IDs + logical cell positions
+
+WorldGrid / EntityStore copied snapshots
+    ↓
+Presentation consumers
+```
+
+`SimulationClock` is a data-only fixed-step accumulator. It accepts non-negative elapsed time, makes every complete 0.1-second prototype interval available for explicit consumption, and increments its tick index once per consumed interval. Zero time produces no tick and negative time is rejected without changing state. A large delta currently exposes all due ticks; overload caps, pausing, time scale, scheduling, and the final tick rate remain future decisions. A simulation tick is independent from render FPS and is not a `WorldGrid` revision.
+
+`EntityStore` is the authoritative owner of the current minimal entity state. It stores stable monotonic IDs in a `PackedInt64Array` and logical x/y cell coordinates in separate `PackedInt32Array` columns. One `Dictionary` maps stable IDs to replaceable dense indices. Removal swaps the last dense row into a removed slot, repairs that stable ID's lookup, and shrinks the packed columns. IDs are never reused, and stale IDs fail safely.
+
+Logical positions are bounded by the supplied world size, but `EntityStore` has no terrain, rendering, simulation-clock, generation, behavior, or scene-tree dependency. Its copied ID/position snapshots prevent presentation consumers from mutating authoritative state. Identity plus position is only the first measured schema; types, health, ownership, behavior, and other components will be added only when real requirements exist.
+
+`EntityStore` is not an ECS framework. Faz 3A deliberately adds no registry, query system, component interface, inheritance tree, system scheduler, or generic entity manager. Dense packed columns and stable lookup solve only the current lifecycle requirement.
+
+`DebugEntityRenderer` is one presentation `Node2D` that copies logical positions only on explicit refresh and draws all markers in one `_draw()` pass. Thirty-two deterministic non-water positions make the preview inspectable; there is no Node per entity and the renderer never owns entity data. The main loop advances the clock and reports ticks but performs no artificial per-entity update. Entity behavior and renderer refresh from genuine simulation changes begin in a later phase.
+
 ## Current project structure
 
 - `project.godot`: Godot project identity and pixel-art-friendly rendering defaults.
@@ -174,6 +200,8 @@ The shared-height relation is specific to generator v2. It is not a `WorldGrid` 
 - `scripts/main.gd`: small seeded world initialization and debug-change orchestration.
 - `scripts/world/`: authoritative world data classes.
 - `scripts/generation/`: deterministic initial-data producer and data-only fingerprint helper.
+- `scripts/simulation/`: data-only fixed-step simulation clock.
+- `scripts/entities/`: minimal authoritative stable-ID and logical-position store.
 - `scripts/presentation/`: replaceable palette, rasterization, chunk rendering, inspection, and preview-fixture code.
 - `tests/world_data_test.gd`: headless data-only contract tests.
 - `tests/terrain_visualization_test.gd`: headless image/presentation contract tests.
@@ -181,10 +209,14 @@ The shared-height relation is specific to generator v2. It is not a `WorldGrid` 
 - `tests/world_layer_extensibility_test.gd`: headless two-layer storage, bounds, change-category, revision, stability, and renderer-independence tests.
 - `tests/elevation_visualization_test.gd`: headless grayscale, overlay lifecycle, alignment, partial-edge, category-isolation, fixture, and inspector tests.
 - `tests/world_generation_test.gd`: headless seed, RNG isolation, fingerprint, bounds, chunk-independence, and initialization-batch tests.
+- `tests/simulation_clock_test.gd`: headless fixed-step accumulation, catch-up, schedule-equivalence, and revision-independence tests.
+- `tests/entity_store_test.gd`: headless lifecycle, bounds, stable-ID, swap-remove, stale-ID, and snapshot tests.
+- `tests/debug_entity_renderer_test.gd`: headless copied-snapshot and no-per-entity-Node presentation tests.
 - `benchmarks/world_data_sanity.gd`: small non-gating baseline workload.
 - `benchmarks/world_generation_sanity.gd`: one small non-gating generated-world baseline workload.
+- `benchmarks/entity_store_sanity.gd`: one non-gating 10,000-row minimal entity lifecycle workload.
 - `tools/validate.ps1`: local and CI validation entry point.
 
 ## Validation guardrails
 
-`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and six separate world-data, terrain-visualization, world change-set, world-layer-extensibility, elevation-visualization, and deterministic-generation suites. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.
+`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and nine separate suites: world data, terrain visualization, world change sets, layer extensibility, elevation visualization, generation, simulation clock, entity store, and debug entity rendering. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.

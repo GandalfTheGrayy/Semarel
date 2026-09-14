@@ -12,8 +12,9 @@
 - **Faz 1D – Second Logical World Layer Extensibility Probe** is complete, pushed, and validated on `main`.
 - Faz 1A–1E foundation series is complete: authoritative data, chunking, multiple logical layers, committed change propagation, and independent presentation consumers are proven by code and tests.
 - **Faz 2A – Deterministic World Initialization & Generation Boundary** is complete, pushed, and validated on `main`.
-- Current completed phase: **Faz 2B – First Coherent Seeded World Prototype**.
-- Next proposed phase: **Faz 3A – Simulation Clock & Minimal Entity Foundation**; this remains subject to repository and product-direction review.
+- **Faz 2B – First Coherent Seeded World Prototype** is complete, pushed, and validated on `main` at `58b4de7557713ab629959e5e75f9139d4c1f11be`.
+- Current completed phase: **Faz 3A – Simulation Clock & Minimal Entity Foundation**.
+- Next proposed phase: **Faz 3B – Minimal Deterministic Entity Movement**; this remains subject to repository and product-direction review.
 
 ## Implemented systems
 
@@ -41,6 +42,11 @@
 - `WorldChangeSet` represents one committed world-change batch with a revision and separate, deterministically ordered terrain/elevation chunk invalidations.
 - `WorldGrid.commit_changes()` separates pending mutations from stable multi-consumer snapshots and advances revision only for non-empty batches.
 - The SPACE-key `DebugWorldChangeProbe` path changes four cells across four chunk boundaries and routes one committed change set to the renderer and debug UI.
+- `SimulationClock` is a scene-tree-independent fixed-step accumulator. Its prototype 10 Hz tick index advances independently from render frames and `WorldGrid` revisions.
+- `EntityStore` owns minimal entity identity and logical cell position in dense packed columns: stable IDs in `PackedInt64Array`, x/y in separate `PackedInt32Array` values, plus one ID-to-dense-index lookup.
+- Entity IDs begin at 1, increase monotonically, are never reused, and remain distinct from swap-remove dense indices.
+- `DebugEntityRenderer` draws copied entity positions from one `Node2D`; the 32-entity preview creates no per-entity Nodes and refreshes only when explicitly requested.
+- A non-gating 10,000-entity create/read-update/remove sanity workload exists at `benchmarks/entity_store_sanity.gd`.
 
 ## Current architecture
 
@@ -65,6 +71,11 @@
 - Terrain and elevation are related through the generator-v2 prototype height field. This relationship belongs to the replaceable v2 algorithm and is not a global `WorldGrid` invariant.
 - Generation writes through the public `WorldGrid` API and leaves pending changes for the owner/orchestrator to commit once. Runtime authoritative ownership remains exclusively with `WorldGrid`.
 - Generation is new-world initialization, not ongoing climate, erosion, ecosystem, or other runtime simulation.
+- Environment state, entity state, simulation time, and presentation have separate owners: `WorldGrid`, `EntityStore`, `SimulationClock`, and renderer Nodes respectively.
+- `EntityStore` validates logical world bounds but deliberately knows nothing about terrain, rendering, behavior, types, health, AI, or navigation.
+- Entity removal uses swap-remove and repairs the moved stable-ID mapping in constant time; stale IDs are rejected safely.
+- `SimulationClock.add_time()` rejects negative deltas, accumulates non-negative render delta, and exposes every due fixed tick through `consume_tick()`. Large-frame catch-up currently processes all due ticks; a production overload cap remains undecided.
+- The main preview consumes due clock ticks but runs no fake per-entity simulation loop. Entity behavior begins only when a real simulation requirement exists.
 
 ## Confirmed decisions
 
@@ -77,11 +88,13 @@
 - Grayscale elevation and 58% overlay opacity are debug presentation choices, not final art direction or a production map mode.
 - Generator v2, seed `12345`, noise parameters, edge falloff, and terrain thresholds are prototype choices, not final world topology, sea level, elevation model, geology, hydrology, or game-design rules.
 - World-change revisions identify committed non-empty batches only; they are not simulation ticks, save versions, or network sequence numbers.
+- The current 10 Hz clock and logical-cell entity positions are engineering prototype contracts, not final simulation-rate or movement-scale decisions.
+- `EntityStore` is a minimal data owner, not an ECS framework or final entity model.
 - Semarel may take high-level inspiration from emergent sandbox simulations, but its systems, mechanics, identity, and visual language must be original.
 
 ## Open decisions
 
-Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
+Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, simulation tick rate/catch-up policy, final entity schema, movement representation, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
 
 ## Verified development tools
 
@@ -89,9 +102,9 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 
 ## Known problems and performance data
 
-- Known project problems: none in the implemented Faz 1A–Faz 2B scope after local, automated, and interactive validation.
-- Data-only world access and generation sanity baselines are recorded in `docs/PERFORMANCE.md`; neither is a performance target or CI threshold.
-- Production-quality procedural generation, biomes, climate, hydrology, simulation entities, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
+- Known project problems: none in the implemented Faz 1A–Faz 3A scope after local automated and interactive OpenGL validation.
+- Data-only world access, generation, and minimal entity-store sanity baselines are recorded in `docs/PERFORMANCE.md`; none is a performance target or CI threshold.
+- Production-quality procedural generation, entity behavior, AI, movement, pathfinding, biomes, climate, hydrology, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
 
 ## Repository rules
 

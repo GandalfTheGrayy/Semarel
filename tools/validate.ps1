@@ -98,7 +98,10 @@ $requiredFiles = @(
     'scripts\world\world_grid.gd',
     'scripts\generation\world_generator.gd',
     'scripts\generation\world_fingerprint.gd',
+    'scripts\simulation\simulation_clock.gd',
+    'scripts\entities\entity_store.gd',
     'scripts\presentation\world_presentation_config.gd',
+    'scripts\presentation\debug_entity_renderer.gd',
     'scripts\presentation\elevation_rasterizer.gd',
     'scripts\presentation\elevation_overlay_renderer.gd',
     'scripts\presentation\terrain_palette.gd',
@@ -112,7 +115,11 @@ $requiredFiles = @(
     'tests\world_layer_extensibility_test.gd',
     'tests\elevation_visualization_test.gd',
     'tests\world_generation_test.gd',
+    'tests\simulation_clock_test.gd',
+    'tests\entity_store_test.gd',
+    'tests\debug_entity_renderer_test.gd',
     'benchmarks\world_generation_sanity.gd',
+    'benchmarks\entity_store_sanity.gd',
     'docs\PLANNING_GUARDRAILS.md',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
@@ -280,6 +287,63 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $worldGenerationTest -P
     }
 } else {
     Write-Fail 'World generation tests' 'test script or Godot executable is missing'
+}
+
+$simulationClockTest = Join-Path $repositoryRoot 'tests\simulation_clock_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $simulationClockTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/simulation_clock_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^SIMULATION_CLOCK_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Simulation clock tests' 'headless fixed-step timing suite completed'
+    } else {
+        Write-Fail 'Simulation clock tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Simulation clock tests' 'test script or Godot executable is missing'
+}
+
+$entityStoreTest = Join-Path $repositoryRoot 'tests\entity_store_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $entityStoreTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/entity_store_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^ENTITY_STORE_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Entity store tests' 'headless compact lifecycle suite completed'
+    } else {
+        Write-Fail 'Entity store tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Entity store tests' 'test script or Godot executable is missing'
+}
+
+$debugEntityRendererTest = Join-Path $repositoryRoot 'tests\debug_entity_renderer_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $debugEntityRendererTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/debug_entity_renderer_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^DEBUG_ENTITY_RENDERER_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Debug entity renderer tests' 'headless single-node presentation suite completed'
+    } else {
+        Write-Fail 'Debug entity renderer tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Debug entity renderer tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

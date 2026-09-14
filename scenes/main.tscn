@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/presentation/terrain_renderer.gd" id="2_renderer"]
 [ext_resource type="Script" path="res://scripts/presentation/world_inspector.gd" id="3_inspector"]
 [ext_resource type="Script" path="res://scripts/presentation/elevation_overlay_renderer.gd" id="4_elevation_overlay"]
+[ext_resource type="Script" path="res://scripts/presentation/debug_entity_renderer.gd" id="5_entity_renderer"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -23,6 +24,9 @@ script = ExtResource("2_renderer")
 [node name="ElevationOverlayRenderer" type="Node2D" parent="World"]
 script = ExtResource("4_elevation_overlay")
 
+[node name="DebugEntityRenderer" type="Node2D" parent="World"]
+script = ExtResource("5_entity_renderer")
+
 [node name="DebugUI" type="CanvasLayer" parent="."]
 
 [node name="Title" type="Label" parent="DebugUI"]
@@ -32,7 +36,7 @@ offset_right = 400.0
 offset_bottom = 38.0
 theme_override_colors/font_color = Color(0.82, 0.88, 0.94, 1)
 theme_override_font_sizes/font_size = 18
-text = "Semarel — Authoritative World Preview"
+text = "Semarel — World & Simulation Preview"
 
 [node name="WorldInspector" type="PanelContainer" parent="DebugUI"]
 offset_left = 570.0
@@ -63,4 +67,4 @@ offset_top = 390.0
 offset_right = 876.0
 offset_bottom = 590.0
 theme_override_colors/font_color = Color(0.72, 0.78, 0.84, 1)
-text = "SPACE: apply debug change batch\nE: elevation overlay (off)\nseed: 12345\ngenerator version: 1\nworld revision: 0\nlast change-set revision: 0\nlast changed terrain chunks: 0\nlast changed elevation chunks: 0"
+text = "SPACE: apply debug change batch\nE: elevation overlay (off)\nseed: 12345 | generator: 2\nworld revision: 0 | simulation tick: 0\nsimulation: 10 Hz | entities: 0\nlast change-set revision: 0\nchanged chunks: terrain 0 | elevation 0"

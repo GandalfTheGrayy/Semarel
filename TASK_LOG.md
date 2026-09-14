@@ -138,6 +138,20 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Default 256×256 seed `12345` distribution was WATER 46.053%, SAND 3.339%, LAND 41.348%, and ROCK 9.261%; these are sanity observations, not design targets.
 - Interactive OpenGL inspection confirmed a continuous island-scale landmass, readable shoreline, elevated rock regions, smooth correlated elevation overlay, aligned presentation, valid inspector data, and no visible chunk seams.
 - Updated the non-gating generation benchmark for v2; no biome, climate, river, lake, erosion, resource, civilization, threading, or production-generation framework was added.
-- Local validation and all six suites passed; post-push GitHub Actions status is reported after the workflow is observed.
+- Local validation and all six suites passed; GitHub Actions validation passed for the implementation commit.
 - Unresolved issues: none in the implemented Faz 2B scope.
-- Commit: `feat: generate first coherent seeded world` (exact hash will be backfilled during the next context-maintenance task).
+- Commit: `58b4de7557713ab629959e5e75f9139d4c1f11be` (`feat: generate first coherent seeded world`).
+
+## 2026-09-15 — Faz 3A: Simulation Clock & Minimal Entity Foundation
+
+- Added a scene-tree-independent `SimulationClock` with a centralized prototype 10 Hz fixed interval, safe negative-delta rejection, sub-tick accumulation, multi-tick catch-up, and a tick index independent from world revision.
+- Added a scene-tree-independent `EntityStore` with monotonic stable IDs, dense packed ID/x/y columns, one ID-to-dense-index map, bounded logical positions, copied snapshots, safe stale-ID behavior, and swap-remove mapping repair.
+- Kept the minimal entity schema to identity plus position; no per-entity Node/Object/Dictionary/Resource, ECS framework, entity type, health, behavior, AI, movement, pathfinding, or spatial index was added.
+- Added one `DebugEntityRenderer` Node that draws a copied snapshot of 32 deterministic non-water debug positions and refreshes explicitly rather than on every render frame.
+- Wired render delta into the fixed clock and exposed simulation tick/entity count beside the existing world revision, seed, generator, SPACE, and elevation-overlay diagnostics; no per-entity tick loop was added.
+- Added three focused headless suites covering fixed-step schedule equivalence, world-revision independence, entity lifecycle/identity/bounds/swap-remove/snapshots, and 100-entity single-node rendering.
+- Added a non-gating 10,000-entity lifecycle sanity benchmark; no performance threshold or optimization claim was introduced.
+- Interactive OpenGL inspection confirmed 32 visible markers from one renderer with zero child Nodes, simulation tick progression while world revision stayed fixed, readable diagnostics/inspector data, and working elevation-overlay plus four-chunk SPACE paths.
+- Preserved all six existing suites and the authoritative-world, generation, change-set, and presentation boundaries.
+- Unresolved issues: none in the implemented Faz 3A scope.
+- Commit: `feat: add simulation clock and entity foundation` (exact hash will be backfilled during the next context-maintenance task).

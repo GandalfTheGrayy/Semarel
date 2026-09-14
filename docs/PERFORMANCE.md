@@ -100,12 +100,36 @@ godot --headless --path . --script res://benchmarks/world_generation_sanity.gd
 
 The measured terrain mix merely confirms that seed `12345` did not collapse to one class. It is not a game-balance or world-design target.
 
+## Faz 3A entity-store sanity baseline
+
+This is one local compact-storage lifecycle sanity measurement, not a target, scalability claim, NPC benchmark, or CI threshold.
+
+| Field | Measured value |
+| --- | --- |
+| Date | 2026-09-15 |
+| Build | Godot Standard 4.7.2 stable, debug/editor binary |
+| Workload | Create 10,000 minimal ID/position entities, perform 100,000 deterministic reads plus position updates, then remove every fourth original ID |
+| Logical bounds | 256×256 cells |
+| Create | 8.711 ms |
+| Read/update | 183.413 ms |
+| Remove 2,500 | 3.172 ms |
+| Final count | 7,500 |
+| Checksum | 560189424 |
+
+Command:
+
+```powershell
+godot --headless --path . --script res://benchmarks/entity_store_sanity.gd
+```
+
+The workload measures only stable-ID lookup, packed logical positions, and swap-remove bookkeeping on one machine. It includes no AI, movement policy, spatial query, rendering, navigation, or real NPC data and does not establish supported population size.
+
 ## Metrics not yet represented
 
 | Metric | Current value |
 | --- | --- |
-| NPC count | Not implemented or measured |
-| Simulation tick time | Not implemented or measured |
+| NPC count | No NPC model; 32 stationary debug entities in preview and a 10,000-row data-store sanity workload only |
+| Simulation tick time | No simulation workload; fixed-clock schedule correctness only |
 | Render FPS | Not measured |
 | Frame time | Not measured |
 | Memory use | Not measured |

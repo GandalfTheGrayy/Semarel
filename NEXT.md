@@ -1,7 +1,7 @@
-# Faz 3A – Simulation Clock & Minimal Entity Foundation
+# Faz 3B – Minimal Deterministic Entity Movement
 
-Move from proven world foundation work toward the first small living-world lifecycle: a simulation tick independent from render FPS, a lightweight entity data representation, a small number of debug entities with logical world positions, and explicit creation/update/removal behavior.
+Consider letting the small debug entity population move deterministically on the fixed simulation tick, remain inside world bounds, obey one minimal terrain-aware movement constraint, and refresh the single-node entity presentation when positions change.
 
-Keep the phase data-oriented and bounded. Do not add AI, pathfinding, needs, jobs, animation, combat, settlements, kingdoms, save/load, networking, or thousands-of-entity optimization before the minimal lifecycle is measured and tested.
+Keep the phase narrow. Do not add pathfinding, an AI framework, needs, jobs, combat, settlements, animation, or a general movement-system architecture before the minimal deterministic behavior is proven.
 
 Before implementation, reassess this proposal against the repository's actual state, `docs/PLANNING_GUARDRAILS.md`, and Semarel's long-term gameplay direction. `NEXT.md` remains a planning proposal, not an automatic command.

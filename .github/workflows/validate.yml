@@ -1,0 +1,49 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: "4.7.2"
+  GODOT_WINDOWS_SHA256: "731980f9608d61333e5baf54a2ef17210acc7a538446c0cb9969f002aca1e953"
+
+jobs:
+  validate:
+    name: Godot project validation
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install official Godot Standard
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = Join-Path $env:RUNNER_TEMP 'godot.zip'
+          $installDirectory = Join-Path $env:RUNNER_TEMP 'godot'
+          $downloadUrl = "https://github.com/godotengine/godot/releases/download/$env:GODOT_VERSION-stable/Godot_v$env:GODOT_VERSION-stable_win64.exe.zip"
+
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $archive
+          $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualHash -ne $env:GODOT_WINDOWS_SHA256) {
+            throw "Godot archive checksum mismatch: $actualHash"
+          }
+
+          Expand-Archive -LiteralPath $archive -DestinationPath $installDirectory
+          $godotExecutable = Join-Path $installDirectory "Godot_v$env:GODOT_VERSION-stable_win64.exe"
+          if (-not (Test-Path -LiteralPath $godotExecutable -PathType Leaf)) {
+            throw "Godot executable was not found after extraction: $godotExecutable"
+          }
+          "GODOT_EXECUTABLE=$godotExecutable" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Validate Semarel
+        shell: pwsh
+        run: .\tools\validate.ps1

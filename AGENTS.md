@@ -18,6 +18,7 @@ Engineering rules:
 - Avoid unnecessary scene-tree Nodes and hot-path allocations. Measure before optimizing.
 - Inspect before rewriting, preserve unrelated working behavior, keep changes task-scoped, test meaningful changes, and never hide errors.
 - Record important architecture and design decisions in the appropriate repository documents.
+- After every meaningful code or Godot project change, run `.\tools\validate.ps1` by default. Run relevant benchmarks for performance work. Use `toolcheck.ps1` only when the development environment is in question.
 
 At the end of every completed task:
 

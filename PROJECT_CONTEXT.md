@@ -6,8 +6,8 @@
 - Repository: `https://github.com/GandalfTheGrayy/Semarel`.
 - Engine: Godot Standard 4.7.2 stable.
 - Language: GDScript.
-- Current phase: **Faz 0 – repository and development environment preparation** is complete.
-- Current task: maintain the validated bootstrap and prepare the repository for Faz 1.
+- Current phase: **Faz 0.1 – Development Guardrails** is complete.
+- Current task: maintain the validated bootstrap and guardrails while preparing for Faz 1.
 - Next phase: **Faz 1 – Dünya Temsili ve Terrain Temeli**.
 
 ## Implemented systems
@@ -15,6 +15,8 @@
 - A valid Godot project exists.
 - `scenes/main.tscn` contains only a minimal `Main -> World` bootstrap hierarchy.
 - `scripts/main.gd` provides a startup marker for smoke validation.
+- `tools/validate.ps1` is the standard local project-health command.
+- `.github/workflows/validate.yml` runs the same validation on pushes and pull requests targeting `main` with official Godot 4.7.2 Standard.
 - No gameplay, terrain, NPC, kingdom, combat, economy, procedural generation, navigation, weather, disaster, or save/load system has been implemented.
 
 ## Current architecture

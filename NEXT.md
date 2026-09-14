@@ -1,3 +1,3 @@
 # Faz 1 – Dünya Temsili ve Terrain Temeli
 
-Define and validate Semarel's first authoritative world/terrain representation without expanding into NPC, kingdom, combat, or other gameplay systems.
+Design the authoritative world representation and terrain-cell data model, keeping visual presentation separate from world state. Build only a small working terrain prototype whose mutations can later support destruction, pathfinding, and save systems; do not add premature NPC or unrelated gameplay systems.

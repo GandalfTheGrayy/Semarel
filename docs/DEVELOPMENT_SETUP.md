@@ -1,38 +1,55 @@
 # Development Setup
 
-Verified on Windows on 2026-09-14. Repository root: `C:\Dev\Semarelrepo`.
+Verified on Windows on 2026-09-14. Commands below are run from the Semarel repository root; no fixed clone location is required.
 
-| Tool | Version | Executable path | Useful command / notes |
-| --- | --- | --- | --- |
-| Godot Standard | 4.7.2 stable | `C:\Users\Muharrem Pehlevan\AppData\Local\Microsoft\WinGet\Links\godot.exe` | `godot --headless --path . --editor --quit` |
-| Git for Windows | 2.55.0.windows.3 | `C:\Dev\Toolchain\PortableGit\cmd\git.exe` | Preferred Git for this repository |
-| Git LFS | 3.7.1 | `C:\Dev\Toolchain\PortableGit\mingw64\bin\git-lfs.exe` | `git lfs version`; use only for targeted large binaries |
-| Python | 3.14.7 | `C:\Dev\Semarelrepo\.venv\Scripts\python.exe` | `.\.venv\Scripts\python.exe --version` |
-| pip | 26.2.1 | `C:\Dev\Semarelrepo\.venv\Scripts\pip.exe` | `.\.venv\Scripts\python.exe -m pip --version` |
-| ImageMagick | 7.1.2-31 Q16-HDRI | `C:\Dev\Toolchain\ImageMagick\magick.exe` | `magick --version` |
-| FFmpeg | 9.0.1 full build | `C:\Users\Muharrem Pehlevan\AppData\Local\Microsoft\WinGet\Links\ffmpeg.exe` | `ffmpeg -version` |
-| ffprobe | 9.0.1 full build | `C:\Users\Muharrem Pehlevan\AppData\Local\Microsoft\WinGet\Links\ffprobe.exe` | `ffprobe -version` |
-| SoX | 14.4.2 | `C:\Users\Muharrem Pehlevan\AppData\Local\Microsoft\WinGet\Packages\ChrisBagwell.SoX_Microsoft.Winget.Source_8wekyb3d8bbwe\sox-14.4.2\sox.exe` | `sox --version` |
-| Inkscape CLI | 1.4.4 | `C:\Dev\Toolchain\Inkscape\PFiles64\Inkscape\bin\inkscape.com` | `inkscape --version` |
-| ripgrep | 15.2.0 | `C:\Users\Muharrem Pehlevan\AppData\Local\Microsoft\WinGet\Links\rg.exe` | `rg --version` |
-| jq | 1.8.2 | `C:\Users\Muharrem Pehlevan\AppData\Local\Microsoft\WinGet\Links\jq.exe` | `jq --version` |
-| 7-Zip CLI | 26.03 | `C:\Dev\Toolchain\7-Zip\Files\7-Zip\7z.exe` | `7z` |
-| hyperfine | 1.20.0 | `C:\Users\Muharrem Pehlevan\AppData\Local\Microsoft\WinGet\Links\hyperfine.exe` | `hyperfine --version` |
+## Verified versions and discovery
 
-Refresh PATH inside a shell opened before the tools were installed:
+| Tool | Verified version | Portable discovery method |
+| --- | --- | --- |
+| Godot Standard | 4.7.2 stable | `Get-Command godot`; CI/fallback: `$env:GODOT_EXECUTABLE`; WinGet alias: `%LOCALAPPDATA%\Microsoft\WinGet\Links\godot.exe` |
+| Git for Windows | 2.55.0.windows.3 | `Get-Command git`; optional portable root: `$env:SEMAREL_TOOLCHAIN_ROOT\PortableGit\cmd\git.exe` |
+| Git LFS | 3.7.1 | `Get-Command git-lfs`; optional portable root: `$env:SEMAREL_TOOLCHAIN_ROOT\PortableGit\mingw64\bin\git-lfs.exe` |
+| Python | 3.14.7 | Repository-local `.venv\Scripts\python.exe`, then `Get-Command python` |
+| pip | 26.2.1 | Repository-local `.venv\Scripts\pip.exe`, then `Get-Command pip` |
+| ImageMagick | 7.1.2-31 Q16-HDRI | `Get-Command magick`; optional portable root: `$env:SEMAREL_TOOLCHAIN_ROOT\ImageMagick\magick.exe` |
+| FFmpeg / ffprobe | 9.0.1 full build | `Get-Command ffmpeg`; `Get-Command ffprobe` |
+| SoX | 14.4.2 | `Get-Command sox` |
+| Inkscape CLI | 1.4.4 | `Get-Command inkscape`; optional portable root: `$env:SEMAREL_TOOLCHAIN_ROOT\Inkscape\PFiles64\Inkscape\bin\inkscape.com` |
+| ripgrep | 15.2.0 | `Get-Command rg` |
+| jq | 1.8.2 | `Get-Command jq` |
+| 7-Zip CLI | 26.03 | `Get-Command 7z`; optional portable root: `$env:SEMAREL_TOOLCHAIN_ROOT\7-Zip\Files\7-Zip\7z.exe` |
+| hyperfine | 1.20.0 | `Get-Command hyperfine` |
+
+The current workstation exposes shared portable fallbacks through the user-level `SEMAREL_TOOLCHAIN_ROOT` environment variable. This variable is optional: standard PATH installations and the repository-local Python environment remain supported.
+
+Refresh PATH inside a shell opened before tools were installed:
 
 ```powershell
 $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
 ```
 
-Open or validate the project:
+Create the local Python environment when needed:
 
 ```powershell
-Set-Location C:\Dev\Semarelrepo
-godot --editor --path .
-godot --headless --path . --editor --quit
-godot --headless --path . --quit-after 30
-.\tools\toolcheck.ps1
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip --version
 ```
 
-The machine also contains older global Git and Python installations. Repository automation uses the explicit portable Git and local Python 3.14 virtual environment above for reproducibility.
+## Standard project commands
+
+```powershell
+Set-Location <Semarel repository root>
+
+# Required after meaningful code or Godot project changes
+.\tools\validate.ps1
+
+# Environment inventory; use when setup problems are suspected
+.\tools\toolcheck.ps1
+
+# Open the editor when interactive work is needed
+godot --editor --path .
+```
+
+`validate.ps1` finds the repository from its own path and does not require the current directory to be the repository root. It checks required files, main-scene configuration, headless project import/parser health, and a bounded runtime launch. Any failed check returns a non-zero process exit code suitable for CI.
+
+GitHub Actions uses the official Godot 4.7.2 Standard Windows release and verifies SHA-256 before executing the same validation script. Local executable paths are never used by CI.

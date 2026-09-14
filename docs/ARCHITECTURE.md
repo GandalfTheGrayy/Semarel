@@ -17,3 +17,9 @@ No gameplay subsystem architecture exists yet.
 - Data layouts should remain compatible with large populations, future chunks/spatial partitioning, deterministic reproduction, and local terrain/navigation updates.
 - Avoid speculative subsystem trees. Add modules and directories when real implementation requires them.
 - Establish measurements before making optimization claims or complex performance tradeoffs.
+
+## Validation guardrails
+
+- `tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, and a bounded runtime smoke test.
+- `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary.
+- `tools/toolcheck.ps1` remains an environment inventory and is intentionally separate from project validation.

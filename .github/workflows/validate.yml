@@ -31,10 +31,20 @@ jobs:
           $installDirectory = Join-Path $env:RUNNER_TEMP 'godot'
           $downloadUrl = "https://github.com/godotengine/godot/releases/download/$env:GODOT_VERSION-stable/Godot_v$env:GODOT_VERSION-stable_win64.exe.zip"
 
-          Invoke-WebRequest -Uri $downloadUrl -OutFile $archive
-          $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($actualHash -ne $env:GODOT_WINDOWS_SHA256) {
-            throw "Godot archive checksum mismatch: $actualHash"
+          $maximumAttempts = 3
+          for ($attempt = 1; $attempt -le $maximumAttempts; $attempt++) {
+            try {
+              Invoke-WebRequest -Uri $downloadUrl -OutFile $archive
+              $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+              if ($actualHash -ne $env:GODOT_WINDOWS_SHA256) {
+                throw "Godot archive checksum mismatch: $actualHash"
+              }
+              break
+            } catch {
+              if ($attempt -eq $maximumAttempts) { throw }
+              Write-Warning "Godot download attempt $attempt failed; retrying. $($_.Exception.Message)"
+              Start-Sleep -Seconds (5 * $attempt)
+            }
           }
 
           Expand-Archive -LiteralPath $archive -DestinationPath $installDirectory

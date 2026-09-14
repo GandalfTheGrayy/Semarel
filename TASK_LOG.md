@@ -123,6 +123,21 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Preserved the five existing suites (308 assertions); parser/import, runtime smoke, and all six headless suites pass through the single validation command.
 - Recorded a non-gating 256×256 generation sanity baseline in `docs/PERFORMANCE.md`; no CI timing threshold, optimization, threading, or production generator was added.
 - No biome, river, climate, resource, civilization, runtime simulation, world-creation UX, or save compatibility system was implemented.
-- Local validation and interactive preview inspection passed; post-push GitHub Actions status is reported after the workflow is observed.
+- Local validation and interactive preview inspection passed.
+- GitHub Actions validation passed for the implementation commit.
 - Unresolved issues: none in the implemented Faz 2A scope.
-- Commit: `feat: establish deterministic world generation boundary` (exact hash will be backfilled during the next context-maintenance task).
+- Commit: `a455e472f1943c1b7dfe5a8fb64c5c1317ef2ab7` (`feat: establish deterministic world generation boundary`).
+
+## 2026-09-15 — Faz 2B: First Coherent Seeded World Prototype
+
+- Replaced generator-v1 block regions and per-cell elevation hash output with generator version `2`, using one local-seed-derived `FastNoiseLite` smooth FBM field plus a prototype radial edge falloff.
+- Quantized the shared relative-height field to the existing 0–255 prototype elevation storage and classified WATER, SAND, LAND, and ROCK from explicit v2-only thresholds.
+- Preserved the Faz 2A boundary: generation remains data-only, world-coordinate-based, free of retained run state, independent from global RNG and chunk partitioning, and leaves authoritative ownership/commit timing to `WorldGrid`.
+- Added v2 golden regression fingerprints for seed `12345`, world 64×64, and chunk size 16: terrain `823958333`, elevation `1193244069`, combined `3136019`.
+- Expanded generation coverage from 53 to 68 assertions with coherent-neighbor behavior, broad height variation, edge water, exact v2 terrain/elevation relation, all-category presence, removal of the old 12×12 region dependency, and chunk-size 8/16/64 equivalence.
+- Default 256×256 seed `12345` distribution was WATER 46.053%, SAND 3.339%, LAND 41.348%, and ROCK 9.261%; these are sanity observations, not design targets.
+- Interactive OpenGL inspection confirmed a continuous island-scale landmass, readable shoreline, elevated rock regions, smooth correlated elevation overlay, aligned presentation, valid inspector data, and no visible chunk seams.
+- Updated the non-gating generation benchmark for v2; no biome, climate, river, lake, erosion, resource, civilization, threading, or production-generation framework was added.
+- Local validation and all six suites passed; post-push GitHub Actions status is reported after the workflow is observed.
+- Unresolved issues: none in the implemented Faz 2B scope.
+- Commit: `feat: generate first coherent seeded world` (exact hash will be backfilled during the next context-maintenance task).

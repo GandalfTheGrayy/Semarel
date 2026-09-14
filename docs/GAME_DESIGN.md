@@ -23,6 +23,8 @@ Faz 1E's grayscale gradient, semi-transparent overlay, `E` toggle, and unitless 
 
 Faz 2A's generator version `1`, fixed preview seed `12345`, block-like prototype regions, terrain proportions, and elevation byte formula exist only to prove deterministic initialization and ownership boundaries. They do not define final world shape, terrain/elevation relationships, biome logic, naturalism, default seed, or production generation.
 
+Faz 2B's generator version `2` is the first coherent seeded-world prototype. Its island-like radial falloff, smooth-noise parameters, relative height, shoreline band, terrain thresholds, and resulting distribution are replaceable generation choices. They do not require all Semarel worlds to be islands and do not define final sea level, beaches, mountains, elevation units, biomes, geology, or hydrology.
+
 ## Proposed / undecided
 
 Long-term candidates include procedural world generation, mutable terrain, elevation, climate, moisture, destruction, fire and environmental simulation, vegetation, animals, large NPC populations, needs and jobs, settlements, cities, kingdoms, diplomacy, war, buildings, economy, character animation, pixel particles, weather, disasters, magic or special world effects, save/load, and thousands of simulated entities.

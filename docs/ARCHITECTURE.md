@@ -140,8 +140,14 @@ NEW WORLD CREATION
 
 world size + chunk size + explicit seed
         ↓
-WorldGenerator version 1
-        ↓ writes initial logical terrain/elevation values
+WorldGenerator version 2
+        ↓
+deterministic smooth FBM world field
+        ↓
+prototype relative height + edge falloff
+        ├── elevation byte
+        └── terrain classification
+        ↓ writes initial logical values
 WorldGrid
         ↓ owner/orchestrator calls commit_changes()
 Initial WorldChangeSet
@@ -151,13 +157,15 @@ Presentation / future consumers
 
 `WorldGenerator` is a producer; `WorldGrid` remains the authoritative runtime owner. The generator receives a target grid for one call, writes only through its public coordinate APIs, retains no world reference or mutable run state, and does not commit, render, or access the scene tree. The caller decides when initialization is complete and commits the accumulated terrain/elevation invalidations as one batch.
 
-Generation uses an explicit integer seed and a fresh local `RandomNumberGenerator`. Two salt values are drawn locally, after which prototype terrain regions and elevation bytes are derived from logical world coordinates. Global RNG use elsewhere cannot perturb output. The algorithm iterates world coordinates and never reads chunk coordinates, so changing only the chunk partition preserves identical logical values and creates no chunk-boundary generation seams.
+Generation uses an explicit integer seed and a fresh local `RandomNumberGenerator` to derive the seed of one local `FastNoiseLite` simplex-smooth FBM field. The field is sampled only in logical world coordinates. A smooth radial edge falloff lowers the prototype preview boundary, and the resulting relative height is quantized into the existing elevation byte. Prototype terrain is classified from that same byte: low values are water, a narrow threshold band is sand, the middle is land, and high values are rock. Global RNG use elsewhere cannot perturb output. The algorithm never reads chunk coordinates, so changing the partition between chunk sizes 8, 16, and 64 preserves identical logical values and creates no generation seams.
 
-`WorldGenerator.GENERATOR_VERSION = 1` identifies the current deterministic algorithm. This is a small future-facing identifier, not a save compatibility framework. The fixed preview seed `12345`, version, region size, terrain proportions, and elevation formula are development probe values rather than final game rules.
+Generator v1 was the deterministic-boundary engineering probe. `WorldGenerator.GENERATOR_VERSION = 2` identifies the first coherent seeded-world prototype. The version is a small regression identifier, not a save compatibility framework. A 64×64/seed-12345 golden fixture protects v2's terrain, elevation, and combined fingerprints; deliberate algorithm changes require a version bump and newly measured golden values.
+
+The shared-height relation is specific to generator v2. It is not a `WorldGrid` invariant or a permanent rule that terrain must derive only from elevation. Future climate, biome, geology, moisture, resources, or other generation stages may change that relationship when their requirements exist. The fixed preview seed, noise frequencies, falloff, 0–255 quantization, and classification thresholds remain replaceable prototype decisions.
 
 `WorldFingerprint` reads authoritative terrain/elevation in stable row-major logical order and produces separate and combined non-cryptographic checksums. It exists for reproducibility tests and diagnostics, contains no presentation data, and does not make the generated algorithm final.
 
-`WorldPreviewFixture` remains a presentation-test fixture for known pixel expectations. It is distinct from `WorldGenerator`, which initializes the main preview and proves the production-facing ownership boundary. Generation means new-world creation; it is not runtime simulation and does not stand in for future climate, erosion, ecosystems, resources, or other ongoing systems.
+`WorldPreviewFixture` remains a presentation-test fixture for known pixel expectations. It is distinct from `WorldGenerator`, which initializes the main preview and produces the first spatially coherent debug world. Generation means new-world creation; it is not runtime simulation and does not stand in for future climate, erosion, ecosystems, resources, or other ongoing systems. Generator v2 is not the final procedural generator, biome model, elevation model, geology system, or hydrology system.
 
 ## Current project structure
 

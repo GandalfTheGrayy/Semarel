@@ -11,8 +11,9 @@
 - **Faz 1C – Generic World Change Propagation & Incremental Refresh** is complete, pushed, and validated on `main`.
 - **Faz 1D – Second Logical World Layer Extensibility Probe** is complete, pushed, and validated on `main`.
 - Faz 1A–1E foundation series is complete: authoritative data, chunking, multiple logical layers, committed change propagation, and independent presentation consumers are proven by code and tests.
-- Current completed phase: **Faz 2A – Deterministic World Initialization & Generation Boundary**.
-- Next proposed phase: **Faz 2B – Generation Output Structure & Layer Relationship Probe**; this remains subject to repository and product-direction review.
+- **Faz 2A – Deterministic World Initialization & Generation Boundary** is complete, pushed, and validated on `main`.
+- Current completed phase: **Faz 2B – First Coherent Seeded World Prototype**.
+- Next proposed phase: **Faz 3A – Simulation Clock & Minimal Entity Foundation**; this remains subject to repository and product-direction review.
 
 ## Implemented systems
 
@@ -31,7 +32,8 @@
 - `WorldPresentationConfig` owns the shared prototype 2× presentation scale and debug overlay opacity without affecting world data.
 - `WorldInspector` reports read-only world, chunk, local, terrain, and unitless prototype elevation information under the mouse.
 - `WorldPreviewFixture` creates a deterministic debug island and simple elevation gradient solely for presentation verification; it is not production generation.
-- `WorldGenerator` is a scene-tree-independent initial-data producer with an explicit integer seed and version `1`; it does not own `WorldGrid`, commit revisions, render, or run as simulation.
+- `WorldGenerator` is a scene-tree-independent initial-data producer with an explicit integer seed and version `2`; it does not own `WorldGrid`, commit revisions, render, or run as simulation.
+- Generator v2 samples one deterministic smooth FBM height field in logical world coordinates, applies a prototype radial edge falloff, quantizes relative height to the existing elevation byte, and classifies prototype terrain from that same value.
 - `WorldFingerprint` computes deterministic terrain, elevation, and combined data-only checksums in logical world-coordinate order.
 - The main preview now generates its initial authoritative values with fixed debug seed `12345`, commits one initialization batch, and displays the seed/version for inspection.
 - The 256×256 preview produces 16 chunk visuals, not 65,536 cell Nodes.
@@ -59,7 +61,8 @@
 - The same immutable mixed `WorldChangeSet` can be observed independently by both renderers and debug UI.
 - All derived elevation images, textures, and sprites can be destroyed and rebuilt from copied `WorldGrid` data.
 - Old change sets remain stable after later world mutations and commits.
-- Generation uses a fresh local `RandomNumberGenerator` per call, then derives values from world coordinates; global RNG activity and chunk partitioning do not affect logical output.
+- Generation uses a fresh local `RandomNumberGenerator` per call to seed a local smooth-noise field, then samples world coordinates; global RNG activity and chunk partitioning do not affect logical output.
+- Terrain and elevation are related through the generator-v2 prototype height field. This relationship belongs to the replaceable v2 algorithm and is not a global `WorldGrid` invariant.
 - Generation writes through the public `WorldGrid` API and leaves pending changes for the owner/orchestrator to commit once. Runtime authoritative ownership remains exclusively with `WorldGrid`.
 - Generation is new-world initialization, not ongoing climate, erosion, ecosystem, or other runtime simulation.
 
@@ -72,7 +75,7 @@
 - Cell data uses compact storage; there is no per-cell Node, Object, Dictionary, or Resource.
 - Prototype elevation is an architecture probe, not a final 8-bit elevation, sea-level, slope, mountain, hydrology, or gameplay system.
 - Grayscale elevation and 58% overlay opacity are debug presentation choices, not final art direction or a production map mode.
-- Generator version `1`, seed `12345`, region sizing, and the current terrain/elevation formulas are deterministic engineering-probe choices, not final world-generation or game-design rules.
+- Generator v2, seed `12345`, noise parameters, edge falloff, and terrain thresholds are prototype choices, not final world topology, sea level, elevation model, geology, hydrology, or game-design rules.
 - World-change revisions identify committed non-empty batches only; they are not simulation ticks, save versions, or network sequence numbers.
 - Semarel may take high-level inspiration from emergent sandbox simulations, but its systems, mechanics, identity, and visual language must be original.
 
@@ -86,9 +89,9 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 
 ## Known problems and performance data
 
-- Known project problems: none in the implemented Faz 1A–Faz 2A scope after local, automated, and interactive validation.
+- Known project problems: none in the implemented Faz 1A–Faz 2B scope after local, automated, and interactive validation.
 - Data-only world access and generation sanity baselines are recorded in `docs/PERFORMANCE.md`; neither is a performance target or CI threshold.
-- Production-quality procedural generation, biomes, climate, hydrology, NPCs, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
+- Production-quality procedural generation, biomes, climate, hydrology, simulation entities, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
 
 ## Repository rules
 

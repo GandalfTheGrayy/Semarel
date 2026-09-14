@@ -74,6 +74,32 @@ godot --headless --path . --script res://benchmarks/world_generation_sanity.gd
 
 The measurement is hardware-dependent and includes ordinary `WorldGrid.set_*` validation/change tracking for each logical cell. It does not justify optimization or define production-generation performance. Future comparisons should use the same seed, generator version, world size, build, and workload.
 
+## Faz 2B coherent generation sanity baseline
+
+This is one local generator-v2 sanity measurement, not a performance target, optimization claim, distribution target, or CI threshold. V1 and v2 implement different algorithms, so the timing difference is descriptive only.
+
+| Field | Measured value |
+| --- | --- |
+| Date | 2026-09-15 |
+| Build | Godot Standard 4.7.2 stable, debug/editor binary |
+| Workload | Create a 256×256 world, generate coherent terrain/elevation with seed `12345`, then commit one initial batch |
+| Generator version | 2 |
+| Chunk layout | 64×64 cells; 4×4 chunks; 65,536 logical cells |
+| Generation | 508.313 ms |
+| Initial change set | revision 1; 16 terrain chunks; 16 elevation chunks |
+| Terrain fingerprint | 944353488 |
+| Elevation fingerprint | 1954471561 |
+| Combined fingerprint | 1993745908 |
+| Terrain distribution | WATER 46.053%; SAND 3.339%; LAND 41.348%; ROCK 9.261% |
+
+The benchmark command remains:
+
+```powershell
+godot --headless --path . --script res://benchmarks/world_generation_sanity.gd
+```
+
+The measured terrain mix merely confirms that seed `12345` did not collapse to one class. It is not a game-balance or world-design target.
+
 ## Metrics not yet represented
 
 | Metric | Current value |

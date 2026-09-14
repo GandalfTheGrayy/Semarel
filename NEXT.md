@@ -1,9 +1,7 @@
-# Faz 2B – Generation Output Structure & Layer Relationship Probe
+# Faz 3A – Simulation Clock & Minimal Entity Foundation
 
-Evaluate the proven deterministic initialization output and test one small, explicit relationship between existing logical layers without treating the current generator as production-quality world generation.
+Move from proven world foundation work toward the first small living-world lifecycle: a simulation tick independent from render FPS, a lightweight entity data representation, a small number of debug entities with logical world positions, and explicit creation/update/removal behavior.
 
-A likely focus is whether a minimal staged output rule can make terrain/elevation relationships inspectable while preserving explicit seeds, chunk-partition independence, `WorldGrid` ownership, one committed initialization batch, and presentation separation.
+Keep the phase data-oriented and bounded. Do not add AI, pathfinding, needs, jobs, animation, combat, settlements, kingdoms, save/load, networking, or thousands-of-entity optimization before the minimal lifecycle is measured and tested.
 
-Before implementation, reassess this proposal against the repository's actual state, `docs/PLANNING_GUARDRAILS.md`, and Semarel's long-term gameplay direction. `NEXT.md` is a planning proposal, not an automatic command.
-
-Do not expand this step into realistic biomes, rivers, climate, hydrology, resources, civilizations, runtime simulation, save/load, threading, or a generic generation-pipeline framework.
+Before implementation, reassess this proposal against the repository's actual state, `docs/PLANNING_GUARDRAILS.md`, and Semarel's long-term gameplay direction. `NEXT.md` remains a planning proposal, not an automatic command.

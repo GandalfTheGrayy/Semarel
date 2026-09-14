@@ -19,6 +19,8 @@ Faz 1B's blue, green, pale-yellow, and gray palette and its 2× display scale ar
 
 Faz 1D's prototype elevation byte layer exists only to prove multi-layer world-data extensibility. Its `0–255` storage range and default `0` do not define physical height, sea level, slopes, mountains, generation, hydrology, movement cost, biome rules, or final precision.
 
+Faz 1E's grayscale gradient, semi-transparent overlay, `E` toggle, and unitless inspector value are debug presentation choices. They do not establish final elevation art, map modes, UI, physical units, or gameplay meaning.
+
 ## Proposed / undecided
 
 Long-term candidates include procedural world generation, mutable terrain, elevation, climate, moisture, destruction, fire and environmental simulation, vegetation, animals, large NPC populations, needs and jobs, settlements, cities, kingdoms, diplomacy, war, buildings, economy, character animation, pixel particles, weather, disasters, magic or special world effects, save/load, and thousands of simulated entities.

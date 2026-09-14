@@ -11,10 +11,13 @@ static func apply_to(world_grid: WorldGrid) -> void:
 		Vector2(world_size) * Vector2(0.38, 0.43),
 		Vector2(world_size) * Vector2(0.62, 0.58),
 	]
+	var elevation_denominator := maxi(1, world_size.x + world_size.y - 2)
 
 	for y in range(world_size.y):
 		for x in range(world_size.x):
 			var world_position := Vector2i(x, y)
+			var elevation := roundi(float(x + y) * 255.0 / elevation_denominator)
+			world_grid.set_elevation(world_position, elevation)
 			var normalized := Vector2(
 				(float(x) - center.x) / island_radius.x,
 				(float(y) - center.y) / island_radius.y,

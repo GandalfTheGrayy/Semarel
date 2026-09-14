@@ -68,6 +68,8 @@ Each layer records its own pending chunk only when its stored value changes. A c
 
 `TerrainRenderer.apply_world_changes()` reads terrain chunk invalidations and refreshes only those visuals. The same change set remains available to any number of consumers. The revision identifies committed world-change batches; it is not a simulation tick, save version, or network sequence.
 
+`ElevationOverlayRenderer.apply_world_changes()` independently reads elevation chunk invalidations. Terrain-only batches trigger no elevation refresh, elevation-only batches trigger no terrain refresh, and mixed batches can be passed unchanged to both renderers and debug UI.
+
 `WorldChangeSet` is an invalidation/change-summary mechanism, not a gameplay event bus and not a full cell-by-cell diff. It stores no old/new values, timestamps, actors, reasons, or undo data. Terrain and prototype elevation are its only current categories; future authoritative layers may add their own chunk invalidations when they actually exist.
 
 ## Future logical layers
@@ -91,41 +93,45 @@ Likewise, final chunk size, world size, terrain count, save format, threading mo
 ## Presentation flow
 
 ```text
-AUTHORITATIVE DATA
+AUTHORITATIVE
 
 WorldGrid
-   ↓
-WorldChunkData
-   ↓
-PackedByteArray
+   ├── terrain PackedByteArray
+   └── prototype elevation PackedByteArray
 
 
 PRESENTATION
 
-WorldGrid read API
-   ↓
-copied terrain snapshot + clipped chunk rect
-   ↓
-TerrainRasterizer
-   ↓
-Image (one texel per logical cell)
-   ↓
-TerrainRenderer
-   ↓
-ImageTexture / Sprite2D (one visual per chunk)
+copied terrain snapshot                 copied elevation snapshot
+          ↓                                       ↓
+TerrainRasterizer                     ElevationRasterizer
+          ↓                                       ↓
+TerrainRenderer                       ElevationOverlayRenderer
+          ↓                                       ↓
+ImageTexture / Sprite2D               ImageTexture / Sprite2D
+one visual per chunk                  one visual per chunk
+
+
+INCREMENTAL PRESENTATION
+
+WorldChangeSet
+   ├── terrain chunks   → TerrainRenderer
+   └── elevation chunks → ElevationOverlayRenderer
 ```
 
-`TerrainPalette` owns debug colors; authoritative terrain types contain no `Color`, texture, or sprite information. `TerrainRenderer` applies a presentation-only 2× scale and nearest-neighbor filtering. A 256×256 world with 64×64 chunks therefore creates 16 chunk sprites.
+`TerrainPalette` owns debug terrain colors; `ElevationRasterizer` maps prototype bytes directly to deterministic grayscale. Neither color mapping belongs to authoritative data. `WorldPresentationConfig` holds the shared prototype 2× scale and 58% elevation overlay opacity. These are debug settings, not final art decisions.
 
-The renderer supports `rebuild_all()` and `apply_world_changes(change_set)`. Same-sized textures use `ImageTexture.update()`; only size changes allocate a new texture. A small CPU `Image` cache keeps the latest rasterized presentation state deterministic and testable; it is derived data and is never authoritative.
+Both renderers support `rebuild_all()` and category-specific `apply_world_changes(change_set)`. Same-sized textures use `ImageTexture.update()`; only size changes allocate a new texture. Their small CPU `Image` caches are deterministic, testable derived data and are never authoritative.
 
-Presentation state can be destroyed and rebuilt from `WorldGrid`. Deleting every `Image`, `ImageTexture`, and `Sprite2D` does not affect terrain data.
+Presentation state can be destroyed and rebuilt from copied `WorldGrid` snapshots. Deleting every terrain/elevation `Image`, `ImageTexture`, and `Sprite2D` does not affect either authoritative layer.
 
-The renderer reads only the copied terrain chunk list from a committed `WorldChangeSet`. It does not know about elevation storage or render elevation. Applying an elevation-only change set refreshes no terrain chunk, though the renderer may record that it observed the batch revision. It cannot consume pending state or hide a batch from another consumer.
+`TerrainRenderer` does not know about elevation storage. `ElevationOverlayRenderer` does not read terrain storage. The latter sits above terrain through presentation-only z-ordering, starts hidden, and can be toggled with the debug `E` input. Renderer revision fields only record observation; `WorldGrid` remains revision owner.
 
-`WorldPreviewFixture` is an explicit deterministic debug fixture, not a procedural world generator. `WorldInspector` maps display coordinates through the renderer scale, reads `WorldGrid`, and never writes terrain.
+`WorldPreviewFixture` is an explicit deterministic debug fixture, not a procedural world generator. It now writes a simple x/y elevation gradient beside the debug island, creating one mixed initial commit. `WorldInspector` maps display coordinates through the shared scale and reads both terrain and unitless elevation without mutating them.
 
 The SPACE-key debug change probe is development validation, not runtime terrain-editing gameplay. Its four fixed cells straddle x/y chunk boundaries so a single batch proves targeted refresh across four chunks.
+
+Some implementation repetition is now visible between the two explicit chunk renderers. A generic renderer abstraction will be reconsidered only when a third real presentation layer exists or this repetition creates a demonstrated maintenance problem. Faz 1E does not introduce a renderer registry, layer mode, or map-mode framework.
 
 ## Current project structure
 
@@ -138,9 +144,10 @@ The SPACE-key debug change probe is development validation, not runtime terrain-
 - `tests/terrain_visualization_test.gd`: headless image/presentation contract tests.
 - `tests/world_change_set_test.gd`: headless revision, immutability, ordering, multi-consumer, and incremental-refresh contract tests.
 - `tests/world_layer_extensibility_test.gd`: headless two-layer storage, bounds, change-category, revision, stability, and renderer-independence tests.
+- `tests/elevation_visualization_test.gd`: headless grayscale, overlay lifecycle, alignment, partial-edge, category-isolation, fixture, and inspector tests.
 - `benchmarks/world_data_sanity.gd`: small non-gating baseline workload.
 - `tools/validate.ps1`: local and CI validation entry point.
 
 ## Validation guardrails
 
-`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and four separate world-data, terrain-visualization, world change-set, and world-layer-extensibility suites. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.
+`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and five separate world-data, terrain-visualization, world change-set, world-layer-extensibility, and elevation-visualization suites. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.

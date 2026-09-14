@@ -30,6 +30,7 @@ static func build_inspection_text(world_grid: WorldGrid, world_cell: Vector2i) -
 	if not world_grid.is_inside_world(world_cell):
 		return "World Inspector\n\noutside world"
 	var terrain := world_grid.get_terrain(world_cell)
+	var elevation := world_grid.get_elevation(world_cell)
 	var chunk_position := world_grid.world_to_chunk(world_cell)
 	var local_position := world_grid.world_to_local(world_cell)
 	return (
@@ -37,6 +38,7 @@ static func build_inspection_text(world_grid: WorldGrid, world_cell: Vector2i) -
 		+ "world cell: (%d, %d)\n" % [world_cell.x, world_cell.y]
 		+ "chunk: (%d, %d)\n" % [chunk_position.x, chunk_position.y]
 		+ "local: (%d, %d)\n" % [local_position.x, local_position.y]
-		+ "terrain: %s\n" % TerrainPalette.get_terrain_name(terrain)
-		+ "terrain id: %d" % terrain
+		+ "\nterrain: %s\n" % TerrainPalette.get_terrain_name(terrain)
+		+ "terrain id: %d\n" % terrain
+		+ "\nelevation: %d" % elevation
 	)

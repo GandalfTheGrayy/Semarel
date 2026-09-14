@@ -96,6 +96,9 @@ $requiredFiles = @(
     'scripts\world\world_chunk_data.gd',
     'scripts\world\world_change_set.gd',
     'scripts\world\world_grid.gd',
+    'scripts\presentation\world_presentation_config.gd',
+    'scripts\presentation\elevation_rasterizer.gd',
+    'scripts\presentation\elevation_overlay_renderer.gd',
     'scripts\presentation\terrain_palette.gd',
     'scripts\presentation\terrain_rasterizer.gd',
     'scripts\presentation\terrain_renderer.gd',
@@ -105,6 +108,7 @@ $requiredFiles = @(
     'tests\terrain_visualization_test.gd',
     'tests\world_change_set_test.gd',
     'tests\world_layer_extensibility_test.gd',
+    'tests\elevation_visualization_test.gd',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
     'AGENTS.md'
@@ -233,6 +237,25 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $worldLayerExtensibilit
     }
 } else {
     Write-Fail 'World layer extensibility tests' 'test script or Godot executable is missing'
+}
+
+$elevationVisualizationTest = Join-Path $repositoryRoot 'tests\elevation_visualization_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $elevationVisualizationTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/elevation_visualization_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^ELEVATION_VISUALIZATION_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Elevation visualization tests' 'headless secondary-presentation suite completed'
+    } else {
+        Write-Fail 'Elevation visualization tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Elevation visualization tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

@@ -9,8 +9,9 @@
 - **Faz 1A – Authoritative World Data Foundation** is complete, pushed, and validated on `main`.
 - **Faz 1B – Terrain Visualization & World Inspection** is complete, pushed, and validated on `main`.
 - **Faz 1C – Generic World Change Propagation & Incremental Refresh** is complete, pushed, and validated on `main`.
-- Current completed phase: **Faz 1D – Second Logical World Layer Extensibility Probe**.
-- Next phase: **Faz 1E – Secondary Layer Visualization & Inspection Probe**.
+- **Faz 1D – Second Logical World Layer Extensibility Probe** is complete, pushed, and validated on `main`.
+- Current completed phase: **Faz 1E – Secondary Layer Visualization & Inspection Probe**.
+- Next phase: **Faz 2A – Deterministic World Initialization & Generation Boundary**.
 
 ## Implemented systems
 
@@ -24,8 +25,11 @@
 - `TerrainPalette` maps prototype terrain IDs to debug-only colors and names without adding visual data to `TerrainTypes`.
 - `TerrainRasterizer` converts copied chunk terrain snapshots into one-texel-per-cell `Image` data.
 - `TerrainRenderer` creates one `Sprite2D`/`ImageTexture` visual per logical chunk, uses 2× nearest-neighbor display scaling, and supports full rebuild plus selected-chunk refresh.
-- `WorldInspector` reports read-only world, chunk, local, terrain-name, and terrain-ID information under the mouse.
-- `WorldPreviewFixture` creates a deterministic debug island solely for presentation verification; it is not production generation.
+- `ElevationRasterizer` converts copied prototype elevation snapshots to deterministic grayscale debug images.
+- `ElevationOverlayRenderer` is a separate, toggleable, semi-transparent presentation consumer with one derived visual per chunk.
+- `WorldPresentationConfig` owns the shared prototype 2× presentation scale and debug overlay opacity without affecting world data.
+- `WorldInspector` reports read-only world, chunk, local, terrain, and unitless prototype elevation information under the mouse.
+- `WorldPreviewFixture` creates a deterministic debug island and simple elevation gradient solely for presentation verification; it is not production generation.
 - The 256×256 preview produces 16 chunk visuals, not 65,536 cell Nodes.
 - Prototype elevation is a second independent byte-sized scalar layer with default value `0`; its range and physical/gameplay meaning are not final design decisions.
 - `WorldChangeSet` represents one committed world-change batch with a revision and separate, deterministically ordered terrain/elevation chunk invalidations.
@@ -47,6 +51,9 @@
 - `commit_changes()` returns an immutable-by-contract `WorldChangeSet`; chunk getters return copies and chunks are sorted by y then x.
 - Consumers never own or clear pending state. `TerrainRenderer.apply_world_changes()` reads a change set without modifying it, the world revision, or authoritative terrain.
 - `TerrainRenderer` reads only terrain invalidations; an elevation-only commit produces no terrain refresh or visual change.
+- `ElevationOverlayRenderer` reads only elevation invalidations; terrain-only commits produce no overlay texture refresh.
+- The same immutable mixed `WorldChangeSet` can be observed independently by both renderers and debug UI.
+- All derived elevation images, textures, and sprites can be destroyed and rebuilt from copied `WorldGrid` data.
 - Old change sets remain stable after later world mutations and commits.
 
 ## Confirmed decisions
@@ -57,6 +64,7 @@
 - Terrain is the first logical world layer, not the complete world model.
 - Cell data uses compact storage; there is no per-cell Node, Object, Dictionary, or Resource.
 - Prototype elevation is an architecture probe, not a final 8-bit elevation, sea-level, slope, mountain, hydrology, or gameplay system.
+- Grayscale elevation and 58% overlay opacity are debug presentation choices, not final art direction or a production map mode.
 - World-change revisions identify committed non-empty batches only; they are not simulation ticks, save versions, or network sequence numbers.
 - Semarel may take high-level inspiration from emergent sandbox simulations, but its systems, mechanics, identity, and visual language must be original.
 
@@ -70,9 +78,9 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 
 ## Known problems and performance data
 
-- Known project problems: none in the implemented Faz 1A–Faz 1D scope after local validation.
+- Known project problems: none in the implemented Faz 1A–Faz 1E scope after local and interactive validation.
 - One data-only baseline has been recorded in `docs/PERFORMANCE.md`; it is not a performance target or CI threshold.
-- Production terrain art, procedural generation, NPCs, navigation, save/load, elevation presentation/gameplay, and further logical layers remain unimplemented by design.
+- Production terrain/elevation art, procedural generation, NPCs, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
 
 ## Repository rules
 

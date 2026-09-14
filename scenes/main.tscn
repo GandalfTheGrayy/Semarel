@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/presentation/terrain_renderer.gd" id="2_renderer"]
 [ext_resource type="Script" path="res://scripts/presentation/world_inspector.gd" id="3_inspector"]
+[ext_resource type="Script" path="res://scripts/presentation/elevation_overlay_renderer.gd" id="4_elevation_overlay"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -19,6 +20,9 @@ position = Vector2(32, 44)
 [node name="TerrainRenderer" type="Node2D" parent="World"]
 script = ExtResource("2_renderer")
 
+[node name="ElevationOverlayRenderer" type="Node2D" parent="World"]
+script = ExtResource("4_elevation_overlay")
+
 [node name="DebugUI" type="CanvasLayer" parent="."]
 
 [node name="Title" type="Label" parent="DebugUI"]
@@ -34,7 +38,7 @@ text = "Semarel — Authoritative World Preview"
 offset_left = 570.0
 offset_top = 44.0
 offset_right = 876.0
-offset_bottom = 212.0
+offset_bottom = 306.0
 mouse_filter = 2
 script = ExtResource("3_inspector")
 
@@ -47,16 +51,16 @@ text = "World Inspector\n\noutside world"
 
 [node name="Help" type="Label" parent="DebugUI"]
 offset_left = 570.0
-offset_top = 228.0
+offset_top = 320.0
 offset_right = 876.0
-offset_bottom = 294.0
+offset_bottom = 376.0
 theme_override_colors/font_color = Color(0.54, 0.61, 0.68, 1)
-text = "Move the mouse over the world to inspect\nlogical cell, chunk, local coordinate,\nand prototype terrain data."
+text = "Move the mouse over the world to inspect\nlogical cell, chunk, terrain,\nand prototype elevation data."
 
 [node name="ChangeSummary" type="Label" parent="DebugUI"]
 offset_left = 570.0
-offset_top = 320.0
+offset_top = 400.0
 offset_right = 876.0
-offset_bottom = 418.0
+offset_bottom = 530.0
 theme_override_colors/font_color = Color(0.72, 0.78, 0.84, 1)
-text = "SPACE: apply debug change batch\nworld revision: 0\nlast change-set revision: 0\nlast changed terrain chunks: 0"
+text = "SPACE: apply debug change batch\nE: elevation overlay (off)\nworld revision: 0\nlast change-set revision: 0\nlast changed terrain chunks: 0\nlast changed elevation chunks: 0"

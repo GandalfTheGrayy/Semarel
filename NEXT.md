@@ -1,7 +1,7 @@
-# Faz 1E – Secondary Layer Visualization & Inspection Probe
+# Faz 2A – Deterministic World Initialization & Generation Boundary
 
-Verify that presentation can inspect or display the prototype secondary logical layer independently without coupling it to terrain rendering.
+Introduce a small deterministic producer boundary for initial authoritative world data without turning generation into world ownership or runtime simulation.
 
-A small debug overlay or inspection mode may visualize prototype elevation while preserving the existing terrain renderer and authoritative data boundaries. It must remain replaceable debug presentation, not final art, shader, elevation gameplay, or a production map-mode framework.
+The next prototype should establish an explicit seed contract, verify that the same seed produces the same terrain/elevation output, and keep generation output separate from later runtime mutations and presentation.
 
-Do not implement procedural generation, mountains, slopes, hydrology, pathfinding, biome logic, gameplay, NPCs, save/load, networking, or other future world systems in this phase.
+Do not implement realistic terrain generation, biomes, climate, hydrology, gameplay, NPCs, save/load, networking, or other future systems merely because the generation boundary exists.

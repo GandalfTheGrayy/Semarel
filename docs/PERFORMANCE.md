@@ -42,6 +42,13 @@ The measurement is a single local run and is hardware-dependent. Future comparis
 - This is a raw `PackedByteArray` payload calculation only. Chunk objects, arrays, dictionaries, allocator behavior, and other container overhead are excluded.
 - Terrain and elevation remain compact arrays with no per-cell Objects. No new benchmark, optimization claim, performance target, or CI threshold was introduced.
 
+## Faz 1E secondary presentation sanity
+
+- A 256×256 preview with 64×64 chunks creates 16 terrain visuals plus 16 elevation overlay visuals. Presentation node count therefore scales with chunk count, not 65,536 cells.
+- Elevation `Image`, `ImageTexture`, and `Sprite2D` objects are derived caches that can be discarded and rebuilt from `WorldGrid`.
+- Category-specific tests confirm that terrain-only batches skip elevation texture refresh and elevation-only batches skip terrain texture refresh.
+- No FPS target, numeric rendering benchmark, optimization claim, or CI performance threshold was introduced.
+
 ## Metrics not yet represented
 
 | Metric | Current value |

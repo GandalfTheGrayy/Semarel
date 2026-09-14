@@ -90,6 +90,23 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Preserved the 75-assertion world-data, 42-assertion terrain-visualization, and 44-assertion change-set suites.
 - Documented the 131,072-byte raw terrain-plus-elevation array estimate for a 256×256 prototype world, excluding container/object overhead and without defining a target.
 - Kept elevation precision and gameplay meaning undecided; no visualization, generation, slope, hydrology, pathfinding, biome, or generic layer framework was added.
-- Local parser/import, runtime smoke, and all four headless suites passed; post-push CI status is reported after the workflow is observed.
+- Local parser/import, runtime smoke, and all four headless suites passed.
+- GitHub Actions validation passed for the implementation commit.
 - Unresolved issues: none in the implemented Faz 1D scope.
-- Commit: `feat: prove multi-layer world data extensibility` (exact hash will be backfilled during the next context-maintenance task).
+- Commit: `39da3b600c9a2d45d3aaedb22546e46c80a445f8` (`feat: prove multi-layer world data extensibility`).
+
+## 2026-09-14 — Faz 1E: Secondary Layer Visualization & Inspection Probe
+
+- Added a separate `ElevationOverlayRenderer` that rebuilds exclusively from copied elevation snapshots and clips images through authoritative chunk world rectangles.
+- Added deterministic 0–255 grayscale rasterization, presentation-only 58% opacity, shared prototype display scale, nearest filtering, and terrain-above/below z-ordering.
+- Kept terrain and elevation presentation explicit: each renderer reads only its own `WorldChangeSet` category and neither stores or mutates authoritative layer data.
+- Extended the deterministic debug fixture with a simple x/y elevation gradient; its initial commit is one mixed terrain/elevation batch, not production generation.
+- Added the `E` debug toggle, unitless elevation to `WorldInspector`, and elevation chunk counts to the existing change summary without creating a map-mode or input framework.
+- Added small per-chunk refresh-count inspection hooks and a dedicated 61-assertion elevation-visualization suite covering rasterization, partial edges, alignment, authority, lifecycle, toggle, category isolation, mixed consumers, fixture, and inspector contracts.
+- Preserved the 75-assertion world-data, 42-assertion terrain-visualization, 44-assertion change-set, and 86-assertion layer-extensibility suites.
+- Interactive OpenGL checks confirmed overlay off/on behavior, unitless `elevation: 129` inspection, sharp aligned gradient rendering, gap-free chunk joins, and the existing SPACE terrain probe at revision 2 with zero elevation chunk invalidations.
+- Fixed the inspector/help layout overlap found during visual inspection and removed all temporary capture artifacts.
+- No elevation gameplay, generator, map-mode framework, shader, final art, biome, hydrology, navigation, or Faz 2A system was added.
+- Local parser/import, runtime smoke, and all five headless suites passed; post-push CI status is reported after the workflow is observed.
+- Unresolved issues: none in the implemented Faz 1E scope.
+- Commit: `feat: visualize secondary world layer` (exact hash will be backfilled during the next context-maintenance task).

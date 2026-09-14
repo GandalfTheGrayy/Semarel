@@ -169,4 +169,18 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Measured separate non-gating storage and minimal-movement sanity workloads; the movement workload contains no AI, pathfinding, needs, combat, social simulation, spatial index, or rendering cost.
 - Interactive OpenGL inspection confirmed all 32 debug entities changed logical position by tick 9 without entering WATER or leaving world bounds, movement diagnostics advanced while normal movement left world revision unchanged, and one renderer retained 32 markers with zero child Nodes. The existing elevation overlay, inspector, and SPACE world-change path also remained functional.
 - Unresolved issues: none in the implemented Faz 3B scope.
-- Commit: `feat: add deterministic entity movement` (exact hash will be backfilled during the next context-maintenance task).
+- GitHub Actions validation passed for the implementation commit (Validate run `34905572036`).
+- Commit: `a26f885f89dd5e8eaf8b2546ceb5c34ed97fb905` (`feat: add deterministic entity movement`).
+
+## 2026-09-15 — Faz 3B.1: Movement Hot-Path Diagnosis & Bounded Correction
+
+- Repeated the unchanged 10,000-entity/100-tick/all-LAND movement workload five times after one excluded pre-sample: the before median was 5,711.539 ms with a 5,645.543–5,964.710 ms range. The excluded 7,191.933 ms run followed discarded non-waiting process launches and may have included host contention.
+- Added the development-only, non-gating `entity_movement_profile.gd` benchmark with comparable one-million-operation dense stable-ID/hash, dense position-read, safe terrain-read, position-write, and full-movement workloads.
+- The diagnostic median identified safe `WorldGrid.get_terrain()` calls as the dominant isolated component: 2,407.525 ms, versus 639.746 ms for ID/hash, 486.305 ms for position reads, and 788.829 ms for position writes.
+- Made one bounded production correction: `WorldGrid.get_terrain()` now computes its chunk coordinate once and derives the local coordinate from it, while retaining world bounds checks, chunk encapsulation, and `WorldChunkData` local validation.
+- Added representative terrain-read regressions across chunk sizes 3, 8, and 64, including origin, boundary-minus-one, boundary, partial edge, negative, and outside coordinates.
+- Five equivalent after samples produced a 5,239.395 ms median and 5,191.591–5,370.259 ms range: 472.144 ms (8.27%) below the before median. Diagnostic terrain-read median fell to 1,980.166 ms (17.75%).
+- The before/after final movement checksum remained `1559308248`, all 1,000,000 moves completed, and the world revision remained zero. No movement behavior, tick rate, entity count, ECS, threading, spatial index, unsafe storage API, or gameplay state was added.
+- Timing remains diagnostic only: it is not a supported-NPC claim, production tick budget, or CI threshold. The safe terrain-read layer remains the largest isolated measured component and should be reassessed only with future representative simulation evidence.
+- Final standard validation passed all ten suites with 715 assertions. The entity-store sanity, movement sanity, and movement-profile commands also completed successfully; the final movement run retained the expected checksum and revision.
+- Commit subject: `perf: reduce entity movement hot-path overhead` (exact hash will be backfilled during the next context-maintenance task).

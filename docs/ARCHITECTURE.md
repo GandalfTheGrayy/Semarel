@@ -213,6 +213,8 @@ Movement reads `WorldGrid`, mutates `EntityStore`, and does not mutate `WorldGri
 
 The pass uses `get_dense_count()` plus direct dense ID/position access instead of allocating full-store snapshots each tick. Stable entity IDs are identity; dense indices are ephemeral storage positions. A dense index may change after swap-remove and cannot be persisted as identity. Faz 3B performs no create/remove during movement, so the dense layout remains stable for the duration of each pass. If lifecycle mutation and iteration later share a tick, that contract must be revisited.
 
+High-frequency systems should avoid repeated full-store snapshots and redundant coordinate transforms while preserving authoritative encapsulation. The safe `WorldGrid.get_terrain()` path therefore computes its chunk coordinate once, derives the local coordinate from it, and still delegates to `WorldChunkData` validation; no unchecked storage API is exposed.
+
 Decisions use stable ID plus tick, never dense index or global RNG, so different dense ordering and render-frame schedules preserve per-identity results. Main processes all due simulation ticks, accumulates whether any entity moved, and refreshes presentation once at frame end rather than once per catch-up tick.
 
 WATER blocking belongs only to this prototype behavior; it is not a world-level passability rule or a universal species constraint. Multiple entities may occupy the same logical cell. Sub-cell positions, movement speed, terrain costs, swimming/flying, collision, occupancy, interpolation, targets, navigation, and pathfinding remain undecided and unimplemented.
@@ -242,6 +244,7 @@ WATER blocking belongs only to this prototype behavior; it is not a world-level 
 - `benchmarks/world_generation_sanity.gd`: one small non-gating generated-world baseline workload.
 - `benchmarks/entity_store_sanity.gd`: one non-gating 10,000-row minimal entity lifecycle workload.
 - `benchmarks/entity_movement_sanity.gd`: one non-gating 10,000-entity/100-tick minimal movement workload.
+- `benchmarks/entity_movement_profile.gd`: development-only, non-gating component diagnosis for the minimal movement hot path.
 - `tools/validate.ps1`: local and CI validation entry point.
 
 ## Validation guardrails

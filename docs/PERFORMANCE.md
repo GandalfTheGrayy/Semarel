@@ -148,12 +148,55 @@ godot --headless --path . --script res://benchmarks/entity_movement_sanity.gd
 
 The workload isolates stable-ID hashing, dense position iteration, world bounds/terrain reads, and position writes. It excludes AI, needs, pathfinding, combat, social simulation, occupancy, spatial queries, entity rendering, and real agent data. The result therefore does not mean 10,000 complete NPCs are supported. No multithreading, ECS, GDExtension, SIMD, or spatial partitioning was added from this single baseline.
 
+## Faz 3B.1 movement hot-path diagnosis
+
+This is a local correction-phase diagnosis, not a supported-NPC claim, production tick budget, performance target, or CI threshold.
+
+| Field | Value |
+| --- | --- |
+| Date | 2026-09-15 |
+| Build | Godot Standard 4.7.2 stable, debug/editor binary |
+| Host | Windows 10 Home 10.0.19045; AMD Ryzen 7 5800H; 15.3 GiB RAM; Balanced power plan |
+| Movement workload | Unchanged 10,000 minimal entities, 100 ticks, 256×256 all-LAND world |
+| Repeat method | One excluded pre-sample followed by five recorded runs before and five recorded runs after |
+| Before samples | 5,778.016; 5,964.710; 5,711.539; 5,646.663; 5,645.543 ms |
+| Before min / median / max | 5,645.543 / 5,711.539 / 5,964.710 ms |
+| After samples | 5,276.274; 5,370.259; 5,191.591; 5,239.395; 5,225.046 ms |
+| After min / median / max | 5,191.591 / 5,239.395 / 5,370.259 ms |
+| Median difference | -472.144 ms total; -4.721 ms/tick; -8.27% |
+| Before and after result | 1,000,000 moved; final checksum 1,559,308,248; world revision 0 |
+
+The first synchronous process run measured 7,191.933 ms after an earlier PowerShell attempt launched Godot without waiting for completion. Because that run may have overlapped those discarded processes, it was classified as a contaminated warm-up/outlier before the formal five-sample before set. It is disclosed rather than silently selected or averaged into the comparison.
+
+The development-only `benchmarks/entity_movement_profile.gd` benchmark uses the existing production APIs. Each isolated component performs 1,000,000 operations at the same 10,000-row/100-tick scale and consumes its result through a checksum. The workloads are intentionally comparative and non-additive; their totals should not be summed into a modeled movement time.
+
+| Diagnostic component | Before median | After median | Stable checksum/result |
+| --- | ---: | ---: | --- |
+| Dense iteration + stable-ID hash | 639.746 ms | 597.689 ms | 398,176,955 |
+| Dense position reads | 486.305 ms | 492.376 ms | 960,688,000 |
+| Safe `WorldGrid.get_terrain()` reads | 2,407.525 ms | 1,980.166 ms | 51,500,000 |
+| Valid dense position writes | 788.829 ms | 783.818 ms | 10,185,230 |
+| Full movement | 6,282.255 ms | 5,301.988 ms | 1,000,000 moved; checksum 1,559,308,248 |
+
+Three recorded diagnostic runs were used on each side. The third run on both sides was slower across every component, indicating system-wide run variance rather than a component-specific reversal. The terrain-read layer remained the dominant isolated cost in every run. Its median fell by 427.359 ms (17.75%) after the correction, while the other isolated components were unchanged within the observed noise.
+
+The correction keeps the public safe read contract intact: `WorldGrid.get_terrain()` performs its world bounds check, computes `chunk_position` once, derives `local_position` from that coordinate, and delegates to the encapsulated `WorldChunkData` safe read. No unchecked chunk API or public internal storage was introduced. Movement bounds checks, terrain-ID validation, `EntityStore`, simulation tick rate, and entity count were left unchanged because this diagnosis did not separately justify altering them.
+
+Commands:
+
+```powershell
+godot --headless --path . --script res://benchmarks/entity_movement_sanity.gd
+godot --headless --path . --script res://benchmarks/entity_movement_profile.gd
+```
+
+The remaining known cost is that safe world terrain access is still the largest isolated component in this synthetic loop. That observation does not justify breaking encapsulation or claiming a production population limit; it should be revisited only when a more representative simulation workload exists.
+
 ## Metrics not yet represented
 
 | Metric | Current value |
 | --- | --- |
 | NPC count | No NPC model; 32 moving debug entities in preview and separate 10,000-row data/movement sanity workloads only |
-| Simulation tick time | 56.856 ms/tick for the isolated Faz 3B 10,000-entity minimal movement workload |
+| Simulation tick time | 52.394 ms/tick corrected local median for the isolated Faz 3B.1 10,000-entity minimal movement workload |
 | Render FPS | Not measured |
 | Frame time | Not measured |
 | Memory use | Not measured |

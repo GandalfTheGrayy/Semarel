@@ -14,7 +14,7 @@
 - **Faz 2A – Deterministic World Initialization & Generation Boundary** is complete, pushed, and validated on `main`.
 - **Faz 2B – First Coherent Seeded World Prototype** is complete, pushed, and validated on `main` at `58b4de7557713ab629959e5e75f9139d4c1f11be`.
 - **Faz 3A – Simulation Clock & Minimal Entity Foundation** is complete, pushed, and validated on `main` at `0bae4f5e314ace45f9354d38f1a035be292a3e5a`.
-- Current completed phase: **Faz 3B – Minimal Deterministic Entity Movement**.
+- Current completed phase: **Faz 3B.1 – Movement Hot-Path Diagnosis & Bounded Correction**.
 - Next proposed phase: **Faz 3C – First Agent State & Lifecycle Slice**; this remains subject to repository and product-direction review.
 
 ## Implemented systems
@@ -51,6 +51,7 @@
 - `PrototypeEntityMovement` is a stateless, scene-tree-independent fixed-tick behavior that chooses cardinal directions deterministically from stable entity ID plus tick index.
 - The movement prototype reads `WorldGrid`, writes authoritative positions through `EntityStore`, rejects out-of-bounds/WATER destinations, and reports only a moved-entity count.
 - A separate non-gating 10,000-entity/100-tick movement sanity workload exists at `benchmarks/entity_movement_sanity.gd`.
+- A development-only, non-gating component benchmark at `benchmarks/entity_movement_profile.gd` compares dense ID/hash work, position reads, safe terrain reads, position writes, and full movement at the same 10,000-entity/100-tick scale.
 
 ## Current architecture
 
@@ -84,6 +85,8 @@
 - Direction decisions depend on stable ID and tick rather than dense order. Global RNG activity and render-frame schedule do not affect final positions for the same tick sequence.
 - The main preview processes every due movement tick, then refreshes entity presentation once only if at least one entity moved.
 - Entity movement does not mutate `WorldGrid` or advance its revision. It has no entity revision or change-set framework because no second entity-state consumer requires one yet.
+- Faz 3B.1 measured safe `WorldGrid.get_terrain()` access as the dominant isolated movement component. Its bounded correction computes the chunk coordinate once and derives the local coordinate without exposing unchecked storage or changing safe invalid/outside behavior.
+- High-frequency systems avoid repeated full-store snapshots and redundant coordinate transforms while retaining authoritative ownership and encapsulation. No ECS, threading, or spatial index was introduced.
 
 ## Confirmed decisions
 
@@ -111,8 +114,8 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 
 ## Known problems and performance data
 
-- Known project problems: none in the implemented Faz 1A–Faz 3B scope after local automated validation and visible OpenGL runtime inspection.
-- Data-only world access, generation, entity-store, and minimal movement sanity baselines are recorded in `docs/PERFORMANCE.md`; none is a performance target or CI threshold.
+- Known project problems: safe world terrain access remains the largest isolated component in the synthetic Faz 3B.1 movement diagnosis even after the bounded coordinate-transform correction; more invasive optimization is deferred until representative simulation evidence exists.
+- Data-only world access, generation, entity-store, and minimal movement sanity/diagnostic measurements are recorded in `docs/PERFORMANCE.md`; none is a performance target, supported-NPC claim, production guarantee, or CI threshold.
 - Production-quality procedural generation, AI, pathfinding, occupancy, animation, agent lifecycle/state, biomes, climate, hydrology, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
 
 ## Repository rules

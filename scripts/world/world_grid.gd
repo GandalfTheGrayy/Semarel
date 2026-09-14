@@ -111,8 +111,9 @@ func world_to_local(world_position: Vector2i) -> Vector2i:
 func get_terrain(world_position: Vector2i) -> int:
 	if not is_inside_world(world_position):
 		return TerrainTypes.INVALID
-	var chunk := _get_chunk(world_to_chunk(world_position))
-	return chunk.get_terrain(world_to_local(world_position))
+	var chunk_position := world_to_chunk(world_position)
+	var local_position := world_position - chunk_position * _chunk_size
+	return _get_chunk(chunk_position).get_terrain(local_position)
 
 
 func set_terrain(world_position: Vector2i, terrain: int) -> bool:

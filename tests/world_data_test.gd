@@ -12,6 +12,7 @@ func _initialize() -> void:
 	_test_world_coordinates_and_bounds()
 	_test_chunk_read_api()
 	_test_world_terrain_access()
+	_test_world_terrain_read_regression()
 	_test_pending_chunk_tracking()
 	_test_data_only_types()
 	if _failures == 0:
@@ -126,6 +127,44 @@ func _test_world_terrain_access() -> void:
 	_expect_false(grid.set_terrain(TEST_WORLD_SIZE, TerrainTypes.Id.LAND), "past-edge world set rejected")
 	_expect_false(grid.set_terrain(Vector2i.ZERO, TerrainTypes.Id.size()), "invalid terrain ID rejected")
 	_expect_equal(grid.get_pending_terrain_chunk_count(), 0, "invalid writes do not create pending chunks")
+
+
+func _test_world_terrain_read_regression() -> void:
+	for chunk_size in [3, 8, 64]:
+		var world_size := Vector2i(chunk_size * 2 + 1, chunk_size + 2)
+		var grid := WorldGrid.new(world_size, chunk_size, TerrainTypes.Id.LAND)
+		var positions: Array[Vector2i] = [
+			Vector2i.ZERO,
+			Vector2i(chunk_size - 1, chunk_size - 1),
+			Vector2i(chunk_size, 0),
+			world_size - Vector2i.ONE,
+		]
+		var terrains: Array[int] = [
+			TerrainTypes.Id.SAND,
+			TerrainTypes.Id.ROCK,
+			TerrainTypes.Id.WATER,
+			TerrainTypes.Id.SAND,
+		]
+		for index in range(positions.size()):
+			_expect_true(
+				grid.set_terrain(positions[index], terrains[index]),
+				"terrain regression set chunk size %d index %d" % [chunk_size, index],
+			)
+			_expect_equal(
+				grid.get_terrain(positions[index]),
+				terrains[index],
+				"terrain regression get chunk size %d index %d" % [chunk_size, index],
+			)
+		_expect_equal(
+			grid.get_terrain(Vector2i(-1, 0)),
+			TerrainTypes.INVALID,
+			"terrain regression rejects negative for chunk size %d" % chunk_size,
+		)
+		_expect_equal(
+			grid.get_terrain(world_size),
+			TerrainTypes.INVALID,
+			"terrain regression rejects outside for chunk size %d" % chunk_size,
+		)
 
 
 func _test_chunk_read_api() -> void:

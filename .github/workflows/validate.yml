@@ -31,20 +31,24 @@ jobs:
           $installDirectory = Join-Path $env:RUNNER_TEMP 'godot'
           $downloadUrl = "https://github.com/godotengine/godot/releases/download/$env:GODOT_VERSION-stable/Godot_v$env:GODOT_VERSION-stable_win64.exe.zip"
 
-          $maximumAttempts = 3
-          for ($attempt = 1; $attempt -le $maximumAttempts; $attempt++) {
-            try {
-              Invoke-WebRequest -Uri $downloadUrl -OutFile $archive
-              $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-              if ($actualHash -ne $env:GODOT_WINDOWS_SHA256) {
-                throw "Godot archive checksum mismatch: $actualHash"
-              }
-              break
-            } catch {
-              if ($attempt -eq $maximumAttempts) { throw }
-              Write-Warning "Godot download attempt $attempt failed; retrying. $($_.Exception.Message)"
-              Start-Sleep -Seconds (5 * $attempt)
-            }
+          & curl.exe `
+            --fail `
+            --location `
+            --retry 3 `
+            --retry-all-errors `
+            --retry-delay 5 `
+            --header "Authorization: Bearer $env:GITHUB_TOKEN" `
+            --output $archive `
+            $downloadUrl
+          if ($LASTEXITCODE -ne 0) {
+            Write-Output "::error title=Godot download failed::curl exited with code $LASTEXITCODE after retries."
+            throw "Godot download failed with curl exit code $LASTEXITCODE"
+          }
+
+          $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualHash -ne $env:GODOT_WINDOWS_SHA256) {
+            Write-Output "::error title=Godot checksum mismatch::Expected $env:GODOT_WINDOWS_SHA256 but received $actualHash."
+            throw "Godot archive checksum mismatch: $actualHash"
           }
 
           Expand-Archive -LiteralPath $archive -DestinationPath $installDirectory

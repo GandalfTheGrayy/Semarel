@@ -15,6 +15,8 @@ Faz 1A uses `WATER`, `LAND`, `SAND`, and `ROCK` IDs only to validate compact ter
 
 The 64×64-cell chunk default and 256×256-cell test world are engineering prototype values. They are not final world-design constraints.
 
+Faz 1B's blue, green, pale-yellow, and gray palette and its 2× display scale are debug presentation choices only. They are not final terrain art, biome colors, tilesets, or art scale.
+
 ## Proposed / undecided
 
 Long-term candidates include procedural world generation, mutable terrain, elevation, climate, moisture, destruction, fire and environmental simulation, vegetation, animals, large NPC populations, needs and jobs, settlements, cities, kingdoms, diplomacy, war, buildings, economy, character animation, pixel particles, weather, disasters, magic or special world effects, save/load, and thousands of simulated entities.

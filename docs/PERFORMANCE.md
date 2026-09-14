@@ -23,6 +23,13 @@ godot --headless --path . --script res://benchmarks/world_data_sanity.gd
 
 The measurement is a single local run and is hardware-dependent. Future comparisons must use the same workload and should take repeated samples before drawing conclusions.
 
+## Faz 1B presentation sanity
+
+- A 256×256-cell preview with 64×64 chunks creates 16 `Sprite2D` chunk visuals, not 65,536 cell Nodes.
+- Each full chunk snapshot is 4,096 terrain bytes; partial edge chunks rasterize only their clipped world rectangle.
+- Interactive OpenGL inspection on the recorded workstation showed no obvious stall, blurred filtering, chunk gap, or overlap.
+- No render-time target or CI performance threshold was introduced, and no numeric renderer benchmark is claimed.
+
 ## Metrics not yet represented
 
 | Metric | Current value |

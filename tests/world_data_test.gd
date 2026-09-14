@@ -10,6 +10,7 @@ var _assertions: int = 0
 func _initialize() -> void:
 	_test_chunk_storage_and_access()
 	_test_world_coordinates_and_bounds()
+	_test_chunk_read_api()
 	_test_world_terrain_access()
 	_test_dirty_chunk_tracking()
 	_test_data_only_types()
@@ -125,6 +126,37 @@ func _test_world_terrain_access() -> void:
 	_expect_false(grid.set_terrain(TEST_WORLD_SIZE, TerrainTypes.Id.LAND), "past-edge world set rejected")
 	_expect_false(grid.set_terrain(Vector2i.ZERO, TerrainTypes.Id.size()), "invalid terrain ID rejected")
 	_expect_equal(grid.get_dirty_chunk_count(), 0, "invalid writes do not dirty chunks")
+
+
+func _test_chunk_read_api() -> void:
+	var grid := WorldGrid.new(Vector2i(TEST_CHUNK_SIZE + 1, TEST_CHUNK_SIZE + 1), TEST_CHUNK_SIZE)
+	_expect_true(grid.is_valid_chunk_position(Vector2i.ZERO), "first chunk position is valid")
+	_expect_true(grid.is_valid_chunk_position(Vector2i.ONE), "partial edge chunk position is valid")
+	_expect_false(grid.is_valid_chunk_position(Vector2i(-1, 0)), "negative chunk position is invalid")
+	_expect_false(grid.is_valid_chunk_position(Vector2i(2, 0)), "past-edge chunk position is invalid")
+	_expect_equal(grid.chunk_to_world_origin(Vector2i.ONE), Vector2i(TEST_CHUNK_SIZE, TEST_CHUNK_SIZE), "chunk origin")
+	_expect_equal(
+		grid.get_chunk_world_rect(Vector2i.ZERO),
+		Rect2i(Vector2i.ZERO, Vector2i(TEST_CHUNK_SIZE, TEST_CHUNK_SIZE)),
+		"full chunk world rect",
+	)
+	_expect_equal(
+		grid.get_chunk_world_rect(Vector2i(1, 0)),
+		Rect2i(Vector2i(TEST_CHUNK_SIZE, 0), Vector2i(1, TEST_CHUNK_SIZE)),
+		"right partial chunk world rect",
+	)
+	_expect_equal(
+		grid.get_chunk_world_rect(Vector2i.ONE),
+		Rect2i(Vector2i(TEST_CHUNK_SIZE, TEST_CHUNK_SIZE), Vector2i.ONE),
+		"corner partial chunk world rect",
+	)
+	_expect_equal(grid.get_chunk_world_rect(Vector2i(2, 0)), Rect2i(), "invalid chunk world rect")
+
+	var snapshot := grid.get_chunk_terrain_copy(Vector2i.ZERO)
+	_expect_equal(snapshot.size(), TEST_CHUNK_SIZE * TEST_CHUNK_SIZE, "terrain snapshot contains padded chunk storage")
+	snapshot[0] = TerrainTypes.Id.ROCK
+	_expect_equal(grid.get_terrain(Vector2i.ZERO), TerrainTypes.Id.WATER, "snapshot cannot mutate authoritative terrain")
+	_expect_equal(grid.get_chunk_terrain_copy(Vector2i(2, 0)).size(), 0, "invalid chunk snapshot is empty")
 
 
 func _test_dirty_chunk_tracking() -> void:

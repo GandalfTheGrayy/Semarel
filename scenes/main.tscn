@@ -1,8 +1,54 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/presentation/terrain_renderer.gd" id="2_renderer"]
+[ext_resource type="Script" path="res://scripts/presentation/world_inspector.gd" id="3_inspector"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
 
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 900.0
+offset_bottom = 600.0
+mouse_filter = 2
+color = Color(0.035, 0.043, 0.055, 1)
+
 [node name="World" type="Node2D" parent="."]
+position = Vector2(32, 44)
+
+[node name="TerrainRenderer" type="Node2D" parent="World"]
+script = ExtResource("2_renderer")
+
+[node name="DebugUI" type="CanvasLayer" parent="."]
+
+[node name="Title" type="Label" parent="DebugUI"]
+offset_left = 32.0
+offset_top = 14.0
+offset_right = 400.0
+offset_bottom = 38.0
+theme_override_colors/font_color = Color(0.82, 0.88, 0.94, 1)
+theme_override_font_sizes/font_size = 18
+text = "Semarel — Authoritative World Preview"
+
+[node name="WorldInspector" type="PanelContainer" parent="DebugUI"]
+offset_left = 570.0
+offset_top = 44.0
+offset_right = 876.0
+offset_bottom = 212.0
+mouse_filter = 2
+script = ExtResource("3_inspector")
+
+[node name="Info" type="Label" parent="DebugUI/WorldInspector"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.9, 0.94, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 16
+text = "World Inspector\n\noutside world"
+
+[node name="Help" type="Label" parent="DebugUI"]
+offset_left = 570.0
+offset_top = 228.0
+offset_right = 876.0
+offset_bottom = 310.0
+theme_override_colors/font_color = Color(0.54, 0.61, 0.68, 1)
+text = "Move the mouse over the world to inspect\nlogical cell, chunk, local coordinate,\nand prototype terrain data."

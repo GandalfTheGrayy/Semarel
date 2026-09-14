@@ -44,6 +44,37 @@ func get_chunk_count() -> Vector2i:
 	return _chunk_count
 
 
+func is_valid_chunk_position(chunk_position: Vector2i) -> bool:
+	return (
+		chunk_position.x >= 0
+		and chunk_position.y >= 0
+		and chunk_position.x < _chunk_count.x
+		and chunk_position.y < _chunk_count.y
+	)
+
+
+func chunk_to_world_origin(chunk_position: Vector2i) -> Vector2i:
+	return chunk_position * _chunk_size
+
+
+func get_chunk_world_rect(chunk_position: Vector2i) -> Rect2i:
+	if not is_valid_chunk_position(chunk_position):
+		return Rect2i()
+	var origin := chunk_to_world_origin(chunk_position)
+	var remaining_size := _world_size - origin
+	var actual_size := Vector2i(
+		mini(_chunk_size, remaining_size.x),
+		mini(_chunk_size, remaining_size.y),
+	)
+	return Rect2i(origin, actual_size)
+
+
+func get_chunk_terrain_copy(chunk_position: Vector2i) -> PackedByteArray:
+	if not is_valid_chunk_position(chunk_position):
+		return PackedByteArray()
+	return _get_chunk(chunk_position).get_terrain_copy()
+
+
 func is_inside_world(world_position: Vector2i) -> bool:
 	return (
 		world_position.x >= 0

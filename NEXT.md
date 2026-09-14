@@ -1,7 +1,7 @@
-# Faz 1B – Terrain Visualization & World Inspection
+# Faz 1C – Generic World Change Propagation & Incremental Refresh
 
-Build a small read-only visualization and inspection path over the authoritative `WorldGrid` data introduced in Faz 1A.
+Introduce a small generic runtime change-propagation path so one authoritative world change set can be observed by multiple consumers before it is cleared.
 
-The renderer must consume world data without becoming authoritative. Keep coordinate conversion centralized, make dirty chunks usable for targeted visual refreshes, and provide enough inspection to verify which logical cell/chunk is being displayed.
+Use it to verify targeted terrain-renderer refreshes while keeping mutation and propagation independent from gameplay-specific concepts. Renderer, navigation, save/streaming, and future simulation consumers must not hide changes from one another through destructive consumption.
 
-Do not add production procedural generation, NPCs, navigation, save/load, climate, biome, resource, ownership, combat, or unrelated gameplay systems in this phase.
+Do not add procedural generation, NPCs, combat, disasters, player powers, navigation implementation, save/load, or other gameplay systems in this phase.

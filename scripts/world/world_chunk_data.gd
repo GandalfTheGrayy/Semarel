@@ -22,6 +22,10 @@ func get_cell_count() -> int:
 	return _terrain.size()
 
 
+func get_terrain_copy() -> PackedByteArray:
+	return _terrain.duplicate()
+
+
 func is_valid_local_position(local_position: Vector2i) -> bool:
 	return (
 		local_position.x >= 0

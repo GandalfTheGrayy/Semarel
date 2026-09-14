@@ -6,8 +6,9 @@
 - Repository: `https://github.com/GandalfTheGrayy/Semarel`.
 - Engine: Godot Standard 4.7.2 stable.
 - Language: GDScript.
-- Current phase: **Faz 1A – Authoritative World Data Foundation** is complete locally.
-- Next phase: **Faz 1B – Terrain Visualization & World Inspection**.
+- **Faz 1A – Authoritative World Data Foundation** is complete, pushed, and validated on `main`.
+- Current phase: **Faz 1B – Terrain Visualization & World Inspection** is implemented in this repository state.
+- Next phase: **Faz 1C – Generic World Change Propagation & Incremental Refresh**.
 
 ## Implemented systems
 
@@ -18,7 +19,12 @@
 - Placeholder terrain IDs are `WATER`, `LAND`, `SAND`, and `ROCK`; they validate the storage contract and are not the final terrain design.
 - Headless world-data tests run through `tools/validate.ps1` locally and in GitHub Actions.
 - A small, non-gating data sanity benchmark exists at `benchmarks/world_data_sanity.gd`.
-- `scenes/main.tscn` remains the minimal `Main -> World` bootstrap; no world renderer has been added.
+- `TerrainPalette` maps prototype terrain IDs to debug-only colors and names without adding visual data to `TerrainTypes`.
+- `TerrainRasterizer` converts copied chunk terrain snapshots into one-texel-per-cell `Image` data.
+- `TerrainRenderer` creates one `Sprite2D`/`ImageTexture` visual per logical chunk, uses 2× nearest-neighbor display scaling, and supports full rebuild plus selected-chunk refresh.
+- `WorldInspector` reports read-only world, chunk, local, terrain-name, and terrain-ID information under the mouse.
+- `WorldPreviewFixture` creates a deterministic debug island solely for presentation verification; it is not production generation.
+- The 256×256 preview produces 16 chunk visuals, not 65,536 cell Nodes.
 
 ## Current architecture
 
@@ -28,6 +34,9 @@
 - Successful terrain changes mark one chunk dirty; repeated writes of the same value do not create extra dirty entries.
 - Out-of-world reads return `TerrainTypes.INVALID`; out-of-world or invalid-ID writes return `false` and do not mutate or dirty the world.
 - Future logical layers can be added beside terrain as separate packed arrays or chunk-owned data components without making rendering authoritative. No additional layers are implemented yet.
+- Renderer input is obtained through clipped chunk rectangles and copied terrain snapshots; presentation never receives mutable authoritative arrays.
+- Presentation images, textures, and sprites can be destroyed and rebuilt completely from `WorldGrid`.
+- Dirty chunks are observed with `get_dirty_chunks()` and cleared by orchestration after consumers finish; the renderer never consumes them destructively.
 
 ## Confirmed decisions
 
@@ -48,9 +57,9 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 
 ## Known problems and performance data
 
-- Known project problems: none after Faz 1A local validation.
+- Known project problems: none in the implemented Faz 1A/Faz 1B scope after local validation and interactive visual inspection.
 - One data-only baseline has been recorded in `docs/PERFORMANCE.md`; it is not a performance target or CI threshold.
-- Rendering, procedural generation, NPCs, navigation, save/load, and gameplay simulation remain unimplemented by design.
+- Production terrain art, procedural generation, NPCs, navigation, save/load, runtime editing, and gameplay simulation remain unimplemented by design.
 
 ## Repository rules
 

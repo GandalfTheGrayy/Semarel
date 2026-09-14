@@ -53,6 +53,6 @@ godot --headless --path . --script res://benchmarks/world_data_sanity.gd
 godot --editor --path .
 ```
 
-`validate.ps1` finds the repository from its own path and does not require the current directory to be the repository root. It checks required files, main-scene configuration, headless project import/parser health, a bounded runtime launch, and the headless world-data test suite. Any failed check returns a non-zero process exit code suitable for CI.
+`validate.ps1` finds the repository from its own path and does not require the current directory to be the repository root. It checks required files, main-scene configuration, headless project import/parser health, a bounded runtime launch, the headless world-data suite, and the headless terrain-visualization suite. Any failed check returns a non-zero process exit code suitable for CI.
 
 GitHub Actions uses the official Godot 4.7.2 Standard Windows release and verifies SHA-256 before executing the same validation script. Local executable paths are never used by CI.

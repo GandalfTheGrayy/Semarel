@@ -44,6 +44,21 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Integrated the suite into `tools/validate.ps1`, preserving the existing parser and runtime checks.
 - Recorded a non-gating 256×256 data sanity baseline with 100,000 deterministic set/get pairs in `docs/PERFORMANCE.md`.
 - Kept rendering, procedural generation, NPCs, navigation, save/load, and gameplay systems out of scope.
-- Local validation passed with no parser errors or test failures; post-push CI status is reported after the workflow is observed.
+- Local validation passed with no parser errors or test failures.
+- GitHub Actions validation passed after the authenticated release-download fix.
 - Unresolved issues: none in the implemented Faz 1A scope.
-- Commit: `feat: establish authoritative world data foundation` (exact hash will be backfilled during the next context-maintenance task).
+- Main implementation commit: `a058a0ef11ce80a26924db1a84c5ef67b7664070` (`feat: establish authoritative world data foundation`).
+- CI reliability commits: `dfa748fbe8c1f0c013c1cbefd7aca1abcd0b7765` and `ef917f99303b87bf774a58b7c117ca6964c3d3ac`.
+
+## 2026-09-14 — Faz 1B: Terrain Visualization & World Inspection
+
+- Added clipped chunk geometry and copied terrain-snapshot read APIs without exposing mutable authoritative storage.
+- Added a presentation-only debug palette, data-to-`Image` rasterizer, chunk-scaled renderer, read-only mouse inspector, and deterministic preview fixture.
+- Kept the renderer rebuildable from `WorldGrid`; one 256×256 preview uses 16 chunk sprites rather than per-cell Nodes.
+- Preserved dirty-state ownership outside the renderer: selected chunks can refresh without consuming the shared dirty set.
+- Added 42 headless presentation assertions alongside the preserved 80 world-data assertions, including partial-edge, palette, fallback, immutability, texture reuse, rebuild, and inspector contracts.
+- Interactive OpenGL inspection confirmed visible terrain, correct debug colors, gap-free chunk joins, sharp nearest-neighbor scaling, correct cell/chunk/local data, and explicit outside-world reporting.
+- Added explicit workflow wiring for the repository-scoped `${{ github.token }}` while retaining `contents: read`, retries, and SHA-256 verification.
+- Production art, procedural generation, gameplay mutation, navigation, NPCs, and Faz 1C propagation remained out of scope.
+- Unresolved issues: none in the implemented Faz 1B scope.
+- Commit: `feat: add terrain visualization and inspection` (exact hash will be backfilled during the next context-maintenance task).

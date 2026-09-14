@@ -25,6 +25,8 @@ jobs:
 
       - name: Install official Godot Standard
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           $archive = Join-Path $env:RUNNER_TEMP 'godot.zip'

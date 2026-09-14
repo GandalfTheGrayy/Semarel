@@ -95,7 +95,13 @@ $requiredFiles = @(
     'scripts\world\terrain_types.gd',
     'scripts\world\world_chunk_data.gd',
     'scripts\world\world_grid.gd',
+    'scripts\presentation\terrain_palette.gd',
+    'scripts\presentation\terrain_rasterizer.gd',
+    'scripts\presentation\terrain_renderer.gd',
+    'scripts\presentation\world_inspector.gd',
+    'scripts\presentation\world_preview_fixture.gd',
     'tests\world_data_test.gd',
+    'tests\terrain_visualization_test.gd',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
     'AGENTS.md'
@@ -167,6 +173,25 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $worldDataTest -PathTyp
     }
 } else {
     Write-Fail 'World data tests' 'test script or Godot executable is missing'
+}
+
+$terrainVisualizationTest = Join-Path $repositoryRoot 'tests\terrain_visualization_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $terrainVisualizationTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/terrain_visualization_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^TERRAIN_VISUALIZATION_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Terrain visualization tests' 'headless presentation suite completed'
+    } else {
+        Write-Fail 'Terrain visualization tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Terrain visualization tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

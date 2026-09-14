@@ -9,6 +9,7 @@ var _chunk_size: int
 var _chunk_count: Vector2i
 var _chunks: Array[WorldChunkData] = []
 var _pending_terrain_chunks: Dictionary = {}
+var _pending_elevation_chunks: Dictionary = {}
 var _revision: int = 0
 
 
@@ -80,6 +81,12 @@ func get_chunk_terrain_copy(chunk_position: Vector2i) -> PackedByteArray:
 	return _get_chunk(chunk_position).get_terrain_copy()
 
 
+func get_chunk_elevation_copy(chunk_position: Vector2i) -> PackedByteArray:
+	if not is_valid_chunk_position(chunk_position):
+		return PackedByteArray()
+	return _get_chunk(chunk_position).get_elevation_copy()
+
+
 func is_inside_world(world_position: Vector2i) -> bool:
 	return (
 		world_position.x >= 0
@@ -122,20 +129,49 @@ func set_terrain(world_position: Vector2i, terrain: int) -> bool:
 	return true
 
 
+func get_elevation(world_position: Vector2i) -> int:
+	if not is_inside_world(world_position):
+		return WorldChunkData.INVALID_ELEVATION
+	var chunk := _get_chunk(world_to_chunk(world_position))
+	return chunk.get_elevation(world_to_local(world_position))
+
+
+func set_elevation(world_position: Vector2i, elevation: int) -> bool:
+	if not is_inside_world(world_position) or not WorldChunkData.is_valid_elevation(elevation):
+		return false
+	var chunk_position := world_to_chunk(world_position)
+	var chunk := _get_chunk(chunk_position)
+	var local_position := world_to_local(world_position)
+	if chunk.get_elevation(local_position) == elevation:
+		return true
+	if not chunk.set_elevation(local_position, elevation):
+		return false
+	_pending_elevation_chunks[chunk_position] = true
+	return true
+
+
 func get_pending_terrain_chunk_count() -> int:
 	return _pending_terrain_chunks.size()
 
 
+func get_pending_elevation_chunk_count() -> int:
+	return _pending_elevation_chunks.size()
+
+
 func commit_changes() -> WorldChangeSet:
-	if _pending_terrain_chunks.is_empty():
-		return WorldChangeSet.new(_revision, [])
+	if _pending_terrain_chunks.is_empty() and _pending_elevation_chunks.is_empty():
+		return WorldChangeSet.new(_revision, [], [])
 
 	var terrain_chunks: Array[Vector2i] = []
 	for chunk_position: Vector2i in _pending_terrain_chunks:
 		terrain_chunks.append(chunk_position)
+	var elevation_chunks: Array[Vector2i] = []
+	for chunk_position: Vector2i in _pending_elevation_chunks:
+		elevation_chunks.append(chunk_position)
 	_revision += 1
 	_pending_terrain_chunks.clear()
-	return WorldChangeSet.new(_revision, terrain_chunks)
+	_pending_elevation_chunks.clear()
+	return WorldChangeSet.new(_revision, terrain_chunks, elevation_chunks)
 
 
 func _get_chunk(chunk_position: Vector2i) -> WorldChunkData:

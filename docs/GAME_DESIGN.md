@@ -17,6 +17,8 @@ The 64×64-cell chunk default and 256×256-cell test world are engineering proto
 
 Faz 1B's blue, green, pale-yellow, and gray palette and its 2× display scale are debug presentation choices only. They are not final terrain art, biome colors, tilesets, or art scale.
 
+Faz 1D's prototype elevation byte layer exists only to prove multi-layer world-data extensibility. Its `0–255` storage range and default `0` do not define physical height, sea level, slopes, mountains, generation, hydrology, movement cost, biome rules, or final precision.
+
 ## Proposed / undecided
 
 Long-term candidates include procedural world generation, mutable terrain, elevation, climate, moisture, destruction, fire and environmental simulation, vegetation, animals, large NPC populations, needs and jobs, settlements, cities, kingdoms, diplomacy, war, buildings, economy, character animation, pixel particles, weather, disasters, magic or special world effects, save/load, and thousands of simulated entities.

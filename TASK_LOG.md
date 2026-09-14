@@ -74,6 +74,22 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Added a dedicated 44-assertion world change-set suite while preserving the 75-assertion world-data and 42-assertion visualization suites.
 - Interactive OpenGL checks confirmed revisions 1→2→3, four changed chunks per debug batch, LAND→ROCK→SAND inspection, targeted refresh, sharp filtering, and gap-free rendering.
 - Kept the change set as chunk-level invalidation metadata; no gameplay event bus, full cell diff, navigation, save/streaming, climate, or other future consumer was implemented.
-- Local parser/import, runtime smoke, and all three headless suites passed; post-push CI status is reported after the workflow is observed.
+- Local parser/import, runtime smoke, and all three headless suites passed.
+- GitHub Actions validation passed for the implementation commit.
 - Unresolved issues: none in the implemented Faz 1C scope.
-- Commit: `feat: add generic world change propagation` (exact hash will be backfilled during the next context-maintenance task).
+- Commit: `3ed5ebb662771e861b0cee4f9a158bf0d46e4ef9` (`feat: add generic world change propagation`).
+
+## 2026-09-14 — Faz 1D: Second Logical World Layer Extensibility Probe
+
+- Added prototype elevation as a second independent flat `PackedByteArray` in each `WorldChunkData`, separate from terrain and with no per-cell Objects.
+- Added bounded elevation get/set/fill/copy APIs through `WorldChunkData` and `WorldGrid`, reusing the existing world/chunk/local coordinate path.
+- Added independent pending elevation chunk tracking; terrain and elevation mutations do not mark one another, while a mixed commit advances the single global revision once.
+- Extended immutable-by-contract `WorldChangeSet` snapshots with a separate, y-then-x sorted elevation chunk category.
+- Kept `TerrainRenderer` terrain-only; elevation-only committed batches update its observed revision without refreshing or changing terrain images.
+- Added a dedicated 86-assertion layer-extensibility suite covering storage independence, values/bounds, 65×65 partial edges, deduplication, layered commits, immutable snapshots, stability, and presentation independence.
+- Preserved the 75-assertion world-data, 42-assertion terrain-visualization, and 44-assertion change-set suites.
+- Documented the 131,072-byte raw terrain-plus-elevation array estimate for a 256×256 prototype world, excluding container/object overhead and without defining a target.
+- Kept elevation precision and gameplay meaning undecided; no visualization, generation, slope, hydrology, pathfinding, biome, or generic layer framework was added.
+- Local parser/import, runtime smoke, and all four headless suites passed; post-push CI status is reported after the workflow is observed.
+- Unresolved issues: none in the implemented Faz 1D scope.
+- Commit: `feat: prove multi-layer world data extensibility` (exact hash will be backfilled during the next context-maintenance task).

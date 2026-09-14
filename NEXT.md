@@ -1,7 +1,7 @@
-# Faz 1D – World Layer Extensibility Probe
+# Faz 1E – Secondary Layer Visualization & Inspection Probe
 
-Verify that the chunked world model can accept one small second logical data layer without coupling it to terrain or presentation.
+Verify that presentation can inspect or display the prototype secondary logical layer independently without coupling it to terrain rendering.
 
-A minimal byte-sized elevation/debug layer may be used to test independent storage, access, change invalidation, partial-edge behavior, and change-set extensibility. This is an architecture probe, not a climate, biome, hydrology, navigation, or production elevation system.
+A small debug overlay or inspection mode may visualize prototype elevation while preserving the existing terrain renderer and authoritative data boundaries. It must remain replaceable debug presentation, not final art, shader, elevation gameplay, or a production map-mode framework.
 
-Do not implement procedural generation, gameplay, NPCs, save/load, networking, or other future world systems in this phase.
+Do not implement procedural generation, mountains, slopes, hydrology, pathfinding, biome logic, gameplay, NPCs, save/load, networking, or other future world systems in this phase.

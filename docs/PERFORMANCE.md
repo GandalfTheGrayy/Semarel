@@ -36,6 +36,12 @@ The measurement is a single local run and is hardware-dependent. Future comparis
 - The automated batch test changes 100 cells in one chunk and produces one terrain-chunk invalidation.
 - Committing copies only changed chunk-coordinate metadata into a stable change set; no new performance target or benchmark threshold was introduced.
 
+## Faz 1D multi-layer storage sanity
+
+- A 256×256 logical world contains 65,536 cells. The prototype raw arrays therefore contain approximately 65,536 terrain bytes plus 65,536 elevation bytes: 131,072 bytes total.
+- This is a raw `PackedByteArray` payload calculation only. Chunk objects, arrays, dictionaries, allocator behavior, and other container overhead are excluded.
+- Terrain and elevation remain compact arrays with no per-cell Objects. No new benchmark, optimization claim, performance target, or CI threshold was introduced.
+
 ## Metrics not yet represented
 
 | Metric | Current value |

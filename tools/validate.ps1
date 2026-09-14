@@ -104,6 +104,7 @@ $requiredFiles = @(
     'tests\world_data_test.gd',
     'tests\terrain_visualization_test.gd',
     'tests\world_change_set_test.gd',
+    'tests\world_layer_extensibility_test.gd',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
     'AGENTS.md'
@@ -213,6 +214,25 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $worldChangeSetTest -Pa
     }
 } else {
     Write-Fail 'World change-set tests' 'test script or Godot executable is missing'
+}
+
+$worldLayerExtensibilityTest = Join-Path $repositoryRoot 'tests\world_layer_extensibility_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $worldLayerExtensibilityTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/world_layer_extensibility_test.gd'
+    )
+    $testPassed = $testResult.Output -match '(?m)^WORLD_LAYER_EXTENSIBILITY_TESTS_PASSED assertions=\d+\s*$'
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'World layer extensibility tests' 'headless multi-layer suite completed'
+    } else {
+        Write-Fail 'World layer extensibility tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'World layer extensibility tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

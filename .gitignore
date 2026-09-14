@@ -1,0 +1,23 @@
+# Godot generated cache and editor state
+.godot/
+
+# Python environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local build/export and benchmark results
+builds/
+exports/
+benchmarks/results/
+
+# Temporary editor and OS files
+.idea/
+.vscode/
+*.user
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini

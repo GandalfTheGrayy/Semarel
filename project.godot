@@ -1,0 +1,21 @@
+; Semarel Godot project configuration.
+
+config_version=5
+
+[application]
+
+config/name="Semarel"
+run/main_scene="res://scenes/main.tscn"
+
+[display]
+
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/stretch/scale_mode=1
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+textures/default_filters/use_nearest_mipmap_filter=false

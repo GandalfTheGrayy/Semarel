@@ -169,6 +169,8 @@ The shared-height relation is specific to generator v2. It is not a `WorldGrid` 
 
 ## Simulation time and heterogeneous entity state
 
+The Faz 1-3 foundation period is complete for current gameplay work. It established authoritative mutable world data, deterministic generation, a fixed simulation clock, generic stable-ID entity storage, composable optional state, an identity-preserving lifecycle transition, stable cross-entity references, and repeatable validation/measurement. New infrastructure from Faz 4 onward should normally answer an actual gameplay or simulation requirement. `NEXT.md` remains a planning proposal rather than an automatic implementation command; the former Faz 3F data-driven definition proposal is deferred until multiple real content consumers justify it.
+
 ```text
 FRAME TIME                         AUTHORITATIVE OWNERS
 
@@ -266,7 +268,38 @@ Target deletion does not cascade to the subject, clear the row, or change Living
 
 This owner name is an architecture probe, not ownership gameplay. There is no reverse index, many-to-many graph, relation type enum, generic relationship table, registry, event bus, cascade policy, inventory, building/kingdom/pet/legal ownership, or serializer. Additional real relationships must justify any shared abstraction later.
 
-`DebugEntityRenderer` is one presentation `Node2D` that copies logical positions only on explicit refresh and draws all markers in one `_draw()` pass. Thirty-two deterministic non-water positions make the preview inspectable; there is no Node per entity and the renderer never owns entity data.
+`DebugEntityRenderer` is one presentation `Node2D` that copies logical positions and current Living/Remains presentation membership only on explicit refresh, then draws all markers in one `_draw()` pass. Thirty-two deterministic non-water positions make the preview inspectable; there is no Node per entity and the renderer never owns entity data.
+
+## First autonomous lifecycle loop
+
+```text
+Render delta
+    |
+    v
+SimulationClock
+    |
+    v fixed tick
+PrototypeAgingSystem
+    |
+    v PrototypeLifecycleTransition
+LivingStateStore -> RemainsStateStore
+    |
+    v same tick, living membership already updated
+PrototypeEntityMovement
+    |
+    v living members only
+EntityStore positions
+```
+
+`PrototypeAgingSystem` is a stateless, data-only fixed-tick pass over `LivingStateStore`. Age remains derived as `current_tick - birth_tick`; no age column is stored or incremented. A small stable-ID integer hash maps each current prototype entity to a lifespan from 120 through 200 ticks. This is an interactive engineering rule, not game balance, biological design, species architecture, or a content definition. It uses no global RNG and allocates no per-entity RNG.
+
+When derived age reaches or exceeds that threshold, the aging pass calls the existing `PrototypeLifecycleTransition` with `death_tick = current_tick`. It does not duplicate death logic. The transition preserves core identity and position, removes Living membership, adds Remains membership, and leaves independent optional state such as owner references untouched. Aging/death changes entity optional state only and cannot advance the `WorldGrid` revision.
+
+The pass mutates the dense Living store while iterating it. After a successful transition it deliberately keeps the current dense index so the row swapped into that slot is evaluated next; otherwise it advances. This prevents same-tick deaths from skipping rows without allocating a full living-ID snapshot.
+
+Main uses an explicit `aging -> movement` order for every consumed tick. An entity that dies on a tick is therefore absent from movement membership on that same tick. No registry, scheduler, system graph, health layer, species definition, reproduction, needs, event bus, or lifespan store was introduced.
+
+The single `DebugEntityRenderer` now copies core positions plus Living/Remains membership on explicit refresh. Living entities use the existing bright square marker; remains use a muted cross. Catch-up still processes every authoritative tick and performs at most one presentation refresh at frame end when movement or lifecycle state changed. The renderer reads but never owns or mutates any authoritative store.
 
 ## Prototype deterministic movement
 
@@ -302,6 +335,7 @@ WATER blocking belongs only to this prototype behavior; it is not a world-level 
 - `scripts/world/`: authoritative world data classes.
 - `scripts/generation/`: deterministic initial-data producer and data-only fingerprint helper.
 - `scripts/simulation/`: data-only fixed-step simulation clock.
+- `scripts/simulation/prototype_aging_system.gd`: deterministic derived-age lifecycle pass.
 - `scripts/simulation/prototype_entity_movement.gd`: stateless cardinal one-cell prototype movement pass.
 - `scripts/entities/`: generic authoritative stable-ID/position storage and separate optional living-state storage.
 - `scripts/presentation/`: replaceable palette, rasterization, chunk rendering, inspection, and preview-fixture code.
@@ -316,13 +350,15 @@ WATER blocking belongs only to this prototype behavior; it is not a world-level 
 - `tests/living_state_store_test.gd`: headless optional membership, age derivation, heterogeneity, ownership, and swap-remove tests.
 - `tests/debug_entity_renderer_test.gd`: headless copied-snapshot and no-per-entity-Node presentation tests.
 - `tests/entity_movement_test.gd`: headless deterministic movement, terrain/bounds, dense-order, render-schedule, and refresh-coalescing tests.
+- `tests/prototype_aging_system_test.gd`: headless lifespan, threshold, multi-death, tick-order, schedule, revision, and reference-survival tests.
 - `benchmarks/world_data_sanity.gd`: small non-gating baseline workload.
 - `benchmarks/world_generation_sanity.gd`: one small non-gating generated-world baseline workload.
 - `benchmarks/entity_store_sanity.gd`: one non-gating 10,000-row minimal entity lifecycle workload.
 - `benchmarks/entity_movement_sanity.gd`: one non-gating 10,000-entity/100-tick minimal movement workload.
 - `benchmarks/entity_movement_profile.gd`: development-only, non-gating component diagnosis for the minimal movement hot path.
+- `benchmarks/lifecycle_simulation_sanity.gd`: non-gating 10,000-entity/250-tick aging-plus-movement workload.
 - `tools/validate.ps1`: local and CI validation entry point.
 
 ## Validation guardrails
 
-`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and eleven separate suites: world data, terrain visualization, world change sets, layer extensibility, elevation visualization, generation, simulation clock, entity store, living state, debug entity rendering, and deterministic movement. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.
+`tools/validate.ps1` resolves the repository root from its own location and validates required files, the configured main scene, Godot headless import/parser behavior, a bounded runtime smoke test, and fourteen separate suites: world data, terrain visualization, world change sets, layer extensibility, elevation visualization, generation, simulation clock, entity store, living state, remains/lifecycle transition, stable owner references, debug entity rendering, deterministic movement, and prototype aging. `.github/workflows/validate.yml` runs that same command with a checksum-verified official Godot 4.7.2 Standard binary. `tools/toolcheck.ps1` remains a separate environment inventory.

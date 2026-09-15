@@ -67,4 +67,4 @@ offset_top = 390.0
 offset_right = 876.0
 offset_bottom = 590.0
 theme_override_colors/font_color = Color(0.72, 0.78, 0.84, 1)
-text = "SPACE: apply debug change batch\nE: elevation overlay (off)\nseed: 12345 | generator: 2\nworld revision: 0 | simulation tick: 0\nsimulation: 10 Hz | entities: 0 | living: 0\nmovement tick: 0 | moved: 0\nlast change-set revision: 0\nchanged chunks: terrain 0 | elevation 0"
+text = "SPACE: apply debug change batch\nE: elevation overlay (off)\nseed: 12345 | generator: 2\nworld revision: 0 | simulation tick: 0\nsimulation: 10 Hz | entities: 0\nliving: 0 | remains: 0\ndeaths this frame: 0\nmovement tick: 0 | moved: 0\nlast change-set revision: 0\nchanged chunks: terrain 0 | elevation 0"

@@ -1,5 +1,31 @@
 # Performance
 
+## Faz 4A lifecycle simulation sanity
+
+This is one local representative aging-plus-movement measurement, not a performance target, supported-NPC claim, production tick budget, or CI threshold.
+
+| Field | Measured value |
+| --- | --- |
+| Date | 2026-09-15 |
+| Build | Godot Standard 4.7.2 stable, debug/editor binary |
+| Workload | 10,000 core/living entities on a 256×256 all-LAND world; 250 fixed ticks of production prototype aging followed by movement |
+| Prototype lifecycle | Stable-ID lifespan rule; all entities begin with `birth_tick = 0`; no benchmark-only behavior |
+| Total time | 10,801.992 ms |
+| Average | 43.208 ms/tick across the full 250-tick run |
+| Total moved | 1,592,674 |
+| Total deaths | 10,000 |
+| Final state | 0 living; 10,000 remains |
+| Checksum | 806,723,672 |
+| World revision | 0 |
+
+Command:
+
+```powershell
+godot --headless --path . --script res://benchmarks/lifecycle_simulation_sanity.gd
+```
+
+The average includes the declining movement population, so it is not directly comparable to the earlier constant-10,000-living movement workload. The extra aging pass uses dense Living membership, performs no per-tick full snapshot, and correctly shrinks as entities transition. This sample exposed no accidental per-tick allocation, quadratic behavior, or catastrophic regression; no optimization phase was opened.
+
 ## Faz 3D lifecycle transition note
 
 The living-to-remains transition is an occasional data-only operation over two dense optional stores. Once Living membership is removed, the entity disappears from the existing movement iteration automatically; no remains lookup or branch was added to the per-tick movement hot loop. No new benchmark or performance threshold was introduced for this narrow slice.

@@ -18,7 +18,7 @@ Movement capability targets include walking, swimming, flying, riding, vehicles,
 - Entity definitions should remain open to future data-driven and moddable content rather than requiring one closed entity-type enum.
 - The disappearance of an important entity may later emit durable history or event records without requiring that entity's runtime state to remain alive.
 
-These are capability constraints only. Faz 3D implements only the narrow living-to-remains transition. Faz 3E proves one concrete subject-to-owner reference stored as a stable target ID, including detectable stale-target behavior without silent retargeting. A generic relationship graph, persistence serialization, definition/mod loading, and historical-event systems remain unimplemented and are not approved by this document.
+These are capability constraints only. Faz 3D implements only the narrow living-to-remains transition. Faz 3E proves one concrete subject-to-owner reference stored as a stable target ID, including detectable stale-target behavior without silent retargeting. Faz 4A uses those boundaries for deterministic aging and natural death without defining species or content data. A generic relationship graph, persistence serialization, definition/mod loading, and historical-event systems remain unimplemented and are not approved by this document. The data-driven definition boundary is specifically deferred until at least two real content consumers expose a shared need.
 
 ## Constructed, political, and economic worlds
 

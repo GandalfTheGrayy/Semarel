@@ -1,5 +1,9 @@
-# Faz 3F – Data-Driven Definition Boundary (Proposed Checkpoint)
+# Planning Checkpoint – Next Living-World Behavior
 
-Faz 3E proved one stable subject-to-target reference without object pointers, silent retargeting, or a generic relationship graph. A possible next narrow slice would separate runtime entity state from one tiny immutable content-definition ID/reference so future humans, animals, buildings, items, and moddable content need not depend on a closed code enum.
+Faz 4A uses the established foundation for the first autonomous lifecycle loop: fixed simulation ticks derive age from `birth_tick`, a deterministic prototype lifespan triggers the existing identity-preserving transition, and remains naturally leave movement membership.
 
-Do not implement a mod loader, JSON content pipeline, species, buildings, items, factories, reflection, registry framework, or save/load automatically. The planner must choose one minimal definition need from repository and product requirements, then reassess it against `docs/PLANNING_GUARDRAILS.md` and `docs/FUTURE_SYSTEM_CONSTRAINTS.md`. `NEXT.md` is a proposal, not an automatic command.
+Do not choose or implement the next gameplay domain automatically. Consult the user before opening reproduction/birth, health/damage, resource interaction, needs, species/content definitions, or environment interaction, and identify the concrete behavior and data requirements first.
+
+The former Faz 3F data-driven definition proposal is deferred. There are not yet two real species, building, item, or comparable definition consumers from which to derive a useful common boundary. Add definition infrastructure only when actual content needs justify it; do not add a registry, loader, mod pipeline, or closed type taxonomy preemptively.
+
+`NEXT.md` is a planning checkpoint, not an automatic command. Continue to evaluate proposals against `docs/PLANNING_GUARDRAILS.md`, `docs/FUTURE_SYSTEM_CONSTRAINTS.md`, and the current repository state.

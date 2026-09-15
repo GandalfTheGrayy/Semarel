@@ -9,6 +9,7 @@
 - Godot 4.x Standard and GDScript are the implementation stack.
 - Authoritative world state is independent from rendering.
 - The simulated world may contain heterogeneous living and non-living entity categories. An entity is not inherently a character, NPC, or living creature.
+- Living-world entity lifecycles may change state autonomously as simulation time advances. Faz 4A's first concrete loop lets a living entity age into remains through fixed simulation ticks, after which its loss of Living membership naturally stops its current prototype movement.
 
 ## Prototype implementation, not final design
 
@@ -33,6 +34,8 @@ Faz 3B's deterministic cardinal movement, maximum one logical cell per tick, pro
 Faz 3D's `RemainsState` means only that a core entity stopped being living at a simulation tick while retaining its stable identity and position. It is an architecture probe, not final death or corpse gameplay; decay, skeletons, loot, burial, resurrection, decomposition, smell, disease, scavengers, and remains presentation remain undesigned and unimplemented.
 
 Faz 3E's owner reference is only a concrete stable-ID relationship probe. It does not define inventory, building or kingdom ownership, pets, legal ownership, settlements, transfer rules, permissions, inheritance, control, or any other ownership gameplay.
+
+Faz 4A's lifespan rule and living/remains marker distinction exist only to make the first autonomous lifecycle observable. They do not define biological lifespan, species, health, needs, reproduction, balance, final death mechanics, corpse art, or a data-driven content model. Population decline to zero is acceptable in this isolated prototype because births are outside its scope.
 
 ## Proposed / undecided
 

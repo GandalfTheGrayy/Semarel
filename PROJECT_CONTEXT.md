@@ -15,8 +15,9 @@
 - **Faz 2B – First Coherent Seeded World Prototype** is complete, pushed, and validated on `main` at `58b4de7557713ab629959e5e75f9139d4c1f11be`.
 - **Faz 3A – Simulation Clock & Minimal Entity Foundation** is complete, pushed, and validated on `main` at `0bae4f5e314ace45f9354d38f1a035be292a3e5a`.
 - **Faz 3B.1 – Movement Hot-Path Diagnosis & Bounded Correction** is complete, pushed, and validated on `main` at `10f90a059f93d054e0e896977518822bb8b331bf`.
-- Current completed phase: **Faz 3E – Stable Cross-Entity Reference Slice**.
-- Next proposed checkpoint: **Faz 3F – Data-Driven Definition Boundary**. It is not implemented and must be reassessed before work begins.
+- Current completed phase: **Faz 4A – First Living World Loop**.
+- The Faz 1-3 foundation period is complete and considered sufficient for current gameplay work; new infrastructure is now added on demand for concrete simulation/gameplay requirements.
+- Next checkpoint: **Planning Checkpoint – Next Living-World Behavior**. No new gameplay domain is selected automatically.
 
 ## Implemented systems
 
@@ -55,13 +56,19 @@
 - Owner targets must exist when attached or updated. If a target is later deleted, its raw stable ID remains stored while resolution safely reports missing; monotonic non-reused IDs prevent a new entity from hijacking the stale reference.
 - Owner rows update in place, clear independently with swap-remove, and survive the subject's living-to-remains transition because that transition preserves the core subject ID.
 - Generic entities need no living row. Removing living state preserves the core entity; the orchestration owner removes optional rows before core identity when destroying an entity.
-- `DebugEntityRenderer` draws copied entity positions from one `Node2D`; the 32-entity preview creates no per-entity Nodes and refreshes at most once after all due ticks in a render frame.
+- `DebugEntityRenderer` draws copied entity positions and Living/Remains presentation membership from one `Node2D`; the 32-entity preview creates no per-entity Nodes and refreshes at most once after all due ticks in a render frame when movement or death changed the visible snapshot.
 - A non-gating 10,000-entity create/read-update/remove sanity workload exists at `benchmarks/entity_store_sanity.gd`.
 - `PrototypeEntityMovement` is a stateless, scene-tree-independent fixed-tick behavior that iterates living membership and chooses cardinal directions deterministically from stable entity ID plus tick index.
 - The movement prototype reads `WorldGrid`, writes authoritative positions through `EntityStore`, rejects out-of-bounds/WATER destinations, and reports only a moved-entity count.
 - The debug preview attaches living state with `birth_tick = 0` to all 32 current markers and reports generic and living counts separately.
 - A separate non-gating 10,000-entity/100-tick movement sanity workload exists at `benchmarks/entity_movement_sanity.gd`.
 - A development-only, non-gating component benchmark at `benchmarks/entity_movement_profile.gd` compares dense ID/hash work, position reads, safe terrain reads, position writes, and full movement at the same 10,000-entity/100-tick scale.
+- `PrototypeAgingSystem` is a stateless, scene-tree-independent fixed-tick pass over Living membership. It keeps age derived from `birth_tick` and uses a stable-ID integer hash to assign a prototype 120-200-tick lifespan without global or per-entity RNG.
+- Reaching the lifespan threshold calls the existing `PrototypeLifecycleTransition` with the current simulation tick. The same core ID and position survive, Living becomes Remains, and the entity is absent from movement later in that same tick.
+- Aging handles Living swap-remove in place by rechecking the current dense index after a transition; it takes no per-tick full-ID snapshot.
+- The single `DebugEntityRenderer` snapshots Living/Remains membership beside positions and distinguishes bright living squares from muted remains crosses without per-entity Nodes.
+- Main runs explicit `aging -> movement` order for each fixed tick, coalesces movement and death changes into at most one frame-end renderer refresh, and reports living, remains, deaths this frame, and simulation tick.
+- A non-gating 10,000-entity/250-tick aging-plus-movement sanity workload exists at `benchmarks/lifecycle_simulation_sanity.gd`.
 
 ## Current architecture
 
@@ -101,6 +108,8 @@
 - Movement iterates the living-state dense membership without full-store snapshots, resolves positions through the core store, and performs no create/remove, so the dense layout stays fixed during each pass.
 - Removing Living state during the lifecycle transition naturally removes the entity from later movement passes; movement contains no Remains-specific branch.
 - Direction decisions depend on stable ID and tick rather than dense order. Global RNG activity and render-frame schedule do not affect final positions for the same tick sequence.
+- Prototype lifespan decisions depend only on stable entity ID. Birth tick remains authoritative lifecycle input, age is never stored, and natural death uses simulation tick rather than world revision.
+- Each tick runs aging/lifecycle before movement, so same-tick deaths naturally disappear from movement membership without a Remains branch.
 - The main preview processes every due movement tick, then refreshes entity presentation once only if at least one entity moved.
 - Entity movement does not mutate `WorldGrid` or advance its revision. It has no entity revision or change-set framework because no second entity-state consumer requires one yet.
 - Faz 3B.1 measured safe `WorldGrid.get_terrain()` access as the dominant isolated movement component. Its bounded correction computes the chunk coordinate once and derives the local coordinate without exposing unchecked storage or changing safe invalid/outside behavior.
@@ -122,6 +131,9 @@
 - Optional living membership is the first heterogeneous-state proof. It does not imply that every living category walks or that species, health, needs, death, reproduction, or character systems have been designed.
 - Faz 3D Remains state is only a post-living tick record. It adds no corpse presentation, decay, loot, history, cross-entity relationships, save/load, or data-driven definition system.
 - Faz 3E owner reference is an architecture probe, not ownership gameplay. It adds no inventory, building/kingdom/pet/legal ownership, cascade rules, save/load, or generic relation system.
+- Faz 4A's 120-200-tick hashed lifespan is an engineering behavior for interactive observation, not game balance, biological design, species architecture, or final content data.
+- Faz 4A adds no reproduction, species, health, needs, lifespan store, data-driven definition registry, scheduler, or event bus. Population may decline from 32 living entities to zero in the isolated preview loop.
+- The proposed Faz 3F definition boundary is deferred until at least two real species, building, item, or comparable content consumers establish a shared requirement.
 - Cardinal one-cell movement, prototype WATER blocking, lack of occupancy, and allowing multiple entities in one cell are temporary Faz 3B contracts, not universal species or final movement rules.
 - Semarel may take high-level inspiration from emergent sandbox simulations, but its systems, mechanics, identity, and visual language must be original.
 
@@ -135,7 +147,7 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 
 ## Known problems and performance data
 
-- Known project problems: safe world terrain access remains the largest isolated component in the synthetic movement diagnosis; the optional living-membership layer adds modest measured overhead to that synthetic loop, but no catastrophic 2×/3× regression. More invasive optimization is deferred until representative simulation evidence exists.
+- Known project problems: safe world terrain access remains the largest isolated component in the synthetic movement diagnosis; the optional living-membership layer adds modest measured overhead to that synthetic loop, but no catastrophic 2×/3× regression. The Faz 4A declining-population lifecycle workload averaged 43.208 ms/tick across 250 ticks and is not directly comparable to the constant-population movement benchmark. More invasive optimization is deferred until representative simulation evidence exists.
 - Stable entity IDs are currently scoped to one `EntityStore`. Owner-reference lookups are constrained to their bound store, but a bare int64 cannot prove provenance if a caller passes an equal numeric ID obtained from another store instance; globally namespaced cross-world references remain unimplemented.
 - Data-only world access, generation, entity-store, and minimal movement sanity/diagnostic measurements are recorded in `docs/PERFORMANCE.md`; none is a performance target, supported-NPC claim, production guarantee, or CI threshold.
 - Production-quality procedural generation, AI, pathfinding, occupancy, animation, domain-specific lifecycle/health/needs/species systems, biomes, climate, hydrology, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.

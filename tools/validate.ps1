@@ -99,6 +99,7 @@ $requiredFiles = @(
     'scripts\generation\world_generator.gd',
     'scripts\generation\world_fingerprint.gd',
     'scripts\simulation\simulation_clock.gd',
+    'scripts\simulation\prototype_aging_system.gd',
     'scripts\simulation\prototype_entity_movement.gd',
     'scripts\simulation\prototype_lifecycle_transition.gd',
     'scripts\entities\entity_store.gd',
@@ -125,11 +126,13 @@ $requiredFiles = @(
     'tests\living_state_store_test.gd',
     'tests\remains_state_store_test.gd',
     'tests\prototype_owner_reference_store_test.gd',
+    'tests\prototype_aging_system_test.gd',
     'tests\debug_entity_renderer_test.gd',
     'tests\entity_movement_test.gd',
     'benchmarks\world_generation_sanity.gd',
     'benchmarks\entity_store_sanity.gd',
     'benchmarks\entity_movement_sanity.gd',
+    'benchmarks\lifecycle_simulation_sanity.gd',
     'docs\PLANNING_GUARDRAILS.md',
     'PROJECT_CONTEXT.md',
     'NEXT.md',
@@ -433,6 +436,28 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $entityMovementTest -Pa
     }
 } else {
     Write-Fail 'Entity movement tests' 'test script or Godot executable is missing'
+}
+
+$prototypeAgingSystemTest = Join-Path $repositoryRoot 'tests\prototype_aging_system_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $prototypeAgingSystemTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/prototype_aging_system_test.gd'
+    )
+    $testPassed = (
+        ($testResult.Output -match '(?m)^PROTOTYPE_AGING_SYSTEM_TESTS_PASSED assertions=[1-9]\d*\s*$') -and
+        ($testResult.Output -notmatch '(?m)^(SCRIPT ERROR|ERROR):')
+    )
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Prototype aging system tests' 'headless autonomous-lifecycle suite completed'
+    } else {
+        Write-Fail 'Prototype aging system tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Prototype aging system tests' 'test script or Godot executable is missing'
 }
 
 Write-Host ''

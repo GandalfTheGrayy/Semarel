@@ -13,12 +13,16 @@ const DEBUG_ENTITY_PLACEMENT_STRIDE: int = 1_973
 var _world_grid: WorldGrid
 var _entity_store: EntityStore
 var _living_state_store: LivingStateStore
+var _remains_state_store: RemainsStateStore
 var _simulation_clock: SimulationClock
+var _aging_system: PrototypeAgingSystem
+var _lifecycle_transition: PrototypeLifecycleTransition
 var _entity_movement: PrototypeEntityMovement
 var _debug_probe_step: int = 0
 var _last_change_set: WorldChangeSet
 var _last_movement_tick: int = 0
 var _last_moved_entity_count: int = 0
+var _last_deaths_this_frame: int = 0
 
 
 func _ready() -> void:
@@ -35,21 +39,26 @@ func _ready() -> void:
 	_elevation_overlay.rebuild_all()
 	_entity_store = EntityStore.new(_world_grid.get_world_size())
 	_living_state_store = LivingStateStore.new(_entity_store)
+	_remains_state_store = RemainsStateStore.new(_entity_store)
 	_populate_debug_entities()
 	_debug_entity_renderer.set_entity_store(_entity_store)
+	_debug_entity_renderer.set_state_stores(_living_state_store, _remains_state_store)
 	_debug_entity_renderer.refresh_from_store()
 	_simulation_clock = SimulationClock.new()
+	_aging_system = PrototypeAgingSystem.new()
+	_lifecycle_transition = PrototypeLifecycleTransition.new()
 	_entity_movement = PrototypeEntityMovement.new()
 	_world_inspector.configure(_world_grid, _terrain_renderer)
 	_last_change_set = initial_change_set
 	_update_change_summary(initial_change_set)
 	print(
-		"Semarel preview ready: %d terrain + %d elevation chunk visuals; %d entities; %d living"
+		"Semarel preview ready: %d terrain + %d elevation chunk visuals; %d entities; %d living; %d remains"
 		% [
 			_terrain_renderer.get_chunk_visual_count(),
 			_elevation_overlay.get_chunk_visual_count(),
 			_entity_store.get_entity_count(),
 			_living_state_store.get_living_count(),
+			_remains_state_store.get_remains_count(),
 		],
 	)
 
@@ -60,9 +69,17 @@ func _process(delta: float) -> void:
 	_simulation_clock.add_time(delta)
 	var tick_advanced := false
 	var frame_moved_entity_count := 0
+	var frame_death_count := 0
 	while _simulation_clock.consume_tick():
 		tick_advanced = true
 		_last_movement_tick = _simulation_clock.get_tick_index()
+		frame_death_count += _aging_system.step(
+			_last_movement_tick,
+			_entity_store,
+			_living_state_store,
+			_remains_state_store,
+			_lifecycle_transition,
+		)
 		_last_moved_entity_count = _entity_movement.step(
 			_world_grid,
 			_entity_store,
@@ -70,9 +87,11 @@ func _process(delta: float) -> void:
 			_last_movement_tick,
 		)
 		frame_moved_entity_count += _last_moved_entity_count
-	if frame_moved_entity_count > 0:
+	if frame_moved_entity_count > 0 or frame_death_count > 0:
 		_debug_entity_renderer.refresh_from_store()
-	if tick_advanced:
+	var death_summary_changed := _last_deaths_this_frame != frame_death_count
+	_last_deaths_this_frame = frame_death_count
+	if tick_advanced or death_summary_changed:
 		_update_change_summary(_last_change_set)
 
 
@@ -133,11 +152,19 @@ func _update_change_summary(change_set: WorldChangeSet) -> void:
 		+ "seed: %d | generator: %d\n" % [DEBUG_WORLD_SEED, WorldGenerator.GENERATOR_VERSION]
 		+ "world revision: %d | simulation tick: %d\n"
 		% [_world_grid.get_revision(), _simulation_clock.get_tick_index()]
-		+ "simulation: %.1f Hz | entities: %d | living: %d\n"
+		+ "simulation: %.1f Hz | entities: %d\n"
 		% [
 			_simulation_clock.get_tick_rate(),
 			_entity_store.get_entity_count(),
+		]
+		+ "living: %d | remains: %d\n"
+		% [
 			_living_state_store.get_living_count(),
+			_remains_state_store.get_remains_count(),
+		]
+		+ "deaths this frame: %d\n"
+		% [
+			_last_deaths_this_frame,
 		]
 		+ "movement tick: %d | moved: %d\n"
 		% [_last_movement_tick, _last_moved_entity_count]

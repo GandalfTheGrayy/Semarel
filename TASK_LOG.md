@@ -230,4 +230,19 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Updated architecture, constraints, design boundary, performance notes, project context, task history, and the proposed Faz 3F checkpoint without implementing Faz 3F.
 - Standard validation passed all 13 suites with 988 assertions; the new stable-reference suite contributed 103 assertions and the unchanged preview smoke still reported 32 core/32 living entities.
 - Unresolved limitation: stable IDs are scoped to one `EntityStore`. Binding confines resolution to that store, but a bare int64 cannot prove its originating store if another store contains the same numeric ID; global cross-world identity remains outside Faz 3E.
-- Commit subject: `feat: add stable entity reference slice` (exact hash will be backfilled by the next context-maintenance task).
+- Commit: `0cad6e28cb7c4d6dec2fa1e86cd575e6de32fefe` (`feat: add stable entity reference slice`).
+- GitHub Actions validation passed for the Faz 3E implementation commit (Validate run `34911475343`).
+
+## 2026-09-15 — Faz 4A: First Living World Loop
+
+- Declared the Faz 1-3 foundation sufficient for current gameplay work and established that future infrastructure should normally be justified by a concrete simulation/gameplay requirement. Deferred the proposed Faz 3F data-driven definition boundary until multiple real content consumers exist.
+- Added a data-only `PrototypeAgingSystem` that derives age from existing `birth_tick`, hashes stable entity ID into a deterministic 120-200-tick prototype lifespan, and calls the existing lifecycle transition at the threshold with the current simulation tick.
+- Made aging safe under Living swap-remove by rechecking the current dense index after each successful transition; the hot pass takes no full living-ID snapshot and uses neither global nor per-entity RNG.
+- Integrated explicit `aging -> movement` tick ordering, so a same-tick natural death preserves core ID/position and independent owner references while naturally disappearing from movement membership.
+- Extended the single `DebugEntityRenderer` to snapshot Living/Remains membership and draw bright living squares versus muted remains crosses, with one coalesced frame-end refresh for movement or death changes and no per-entity Nodes.
+- Added meaningful debug counts for living, remains, deaths this frame, and simulation tick. The isolated preview may decline from 32 living entities to zero; reproduction, species, health, needs, and final death/content models remain outside this phase.
+- Added a 201-assertion autonomous-lifecycle suite covering deterministic lifespan, exact threshold, core preservation, death-before-movement, multi-death swap-remove, repeatability, render-schedule independence, world-revision isolation, and owner-reference survival. Expanded renderer coverage from 10 to 23 assertions.
+- Standard validation passed all 14 suites with 1,202 assertions. The non-gating 10,000-entity/250-tick lifecycle workload measured 10,801.992 ms total (43.208 ms/tick), 1,592,674 moves, 10,000 deaths, final 0 living/10,000 remains, checksum `806723672`, and world revision zero.
+- Visible-window validation observed 16 living/16 remains at tick 174 and 0 living/32 remains at tick 261. Bright living squares and muted remains crosses were visibly distinct; E enabled the elevation overlay, SPACE advanced world revision 1→2, and two remains-only world captures two seconds apart had zero changed pixels, confirming remains stayed fixed. A clipped long debug line found during inspection was split so `deaths this frame` remains readable.
+- No scheduler, registry, event bus, lifespan store, definition system, reproduction, species, health, or needs subsystem was added.
+- Commit subject: `feat: add first autonomous lifecycle loop` (exact hash will be backfilled by the next context-maintenance task).

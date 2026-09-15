@@ -15,8 +15,8 @@
 - **Faz 2B – First Coherent Seeded World Prototype** is complete, pushed, and validated on `main` at `58b4de7557713ab629959e5e75f9139d4c1f11be`.
 - **Faz 3A – Simulation Clock & Minimal Entity Foundation** is complete, pushed, and validated on `main` at `0bae4f5e314ace45f9354d38f1a035be292a3e5a`.
 - **Faz 3B.1 – Movement Hot-Path Diagnosis & Bounded Correction** is complete, pushed, and validated on `main` at `10f90a059f93d054e0e896977518822bb8b331bf`.
-- Current completed phase: **Faz 3D – Stable Entity Lifecycle Transition**.
-- Next proposed checkpoint: **Faz 3E – Stable Cross-Entity Reference Slice**. It is not implemented; its real relationship must be selected from repository and product requirements before work begins.
+- Current completed phase: **Faz 3E – Stable Cross-Entity Reference Slice**.
+- Next proposed checkpoint: **Faz 3F – Data-Driven Definition Boundary**. It is not implemented and must be reassessed before work begins.
 
 ## Implemented systems
 
@@ -51,6 +51,9 @@
 - `RemainsStateStore` is a separate optional state owner bound to one `EntityStore`; it stores stable member IDs and `death_tick` values in dense `PackedInt64Array` columns.
 - `PrototypeLifecycleTransition` changes a valid living entity into remains by attaching Remains state and removing Living state while preserving the same core entity ID and logical position.
 - Failed lifecycle transitions validate before mutation; an unexpected living-removal failure rolls the just-added remains row back, preventing a half-transition.
+- `PrototypeOwnerReferenceStore` is the first concrete cross-entity reference slice. Dense packed rows store one subject stable ID and one owner stable ID, with no target object pointer or dense-index authority.
+- Owner targets must exist when attached or updated. If a target is later deleted, its raw stable ID remains stored while resolution safely reports missing; monotonic non-reused IDs prevent a new entity from hijacking the stale reference.
+- Owner rows update in place, clear independently with swap-remove, and survive the subject's living-to-remains transition because that transition preserves the core subject ID.
 - Generic entities need no living row. Removing living state preserves the core entity; the orchestration owner removes optional rows before core identity when destroying an entity.
 - `DebugEntityRenderer` draws copied entity positions from one `Node2D`; the 32-entity preview creates no per-entity Nodes and refreshes at most once after all due ticks in a render frame.
 - A non-gating 10,000-entity create/read-update/remove sanity workload exists at `benchmarks/entity_store_sanity.gd`.
@@ -89,6 +92,8 @@
 - `RemainsStateStore` validates core identity on attachment but owns only `death_tick`; it does not duplicate `birth_tick`, own positions, or imply a final corpse system.
 - Living-to-remains is an optional-state transition, not entity replacement. The same stable core ID and position persist, while this specific pair remains exclusive through the transition API.
 - Optional state stores are composable state slices rather than one global type system. Generic-only, living, and remains entities can coexist in one `EntityStore`; no `EntityType` enum, ECS/component registry, or generic state machine exists.
+- Cross-entity owner state is another independent optional slice. Stored target identity and current target resolution are separate semantics; target deletion does not cascade, clear the raw row, or mutate Living/Remains state.
+- Source reference cleanup remains explicit orchestration before core source deletion. No reverse index, relationship graph/framework, relation type registry, or serializer exists.
 - Optional-state removal does not cascade into core removal. The main/orchestration layer owns cleanup ordering; Faz 3C adds no event bus, coordinator, registry, or ECS.
 - Entity removal uses swap-remove and repairs the moved stable-ID mapping in constant time; stale IDs are rejected safely.
 - `SimulationClock.add_time()` rejects negative deltas, accumulates non-negative render delta, and exposes every due fixed tick through `consume_tick()`. Large-frame catch-up currently processes all due ticks; a production overload cap remains undecided.
@@ -116,12 +121,13 @@
 - `EntityStore` is a minimal data owner, not an ECS framework or final entity model.
 - Optional living membership is the first heterogeneous-state proof. It does not imply that every living category walks or that species, health, needs, death, reproduction, or character systems have been designed.
 - Faz 3D Remains state is only a post-living tick record. It adds no corpse presentation, decay, loot, history, cross-entity relationships, save/load, or data-driven definition system.
+- Faz 3E owner reference is an architecture probe, not ownership gameplay. It adds no inventory, building/kingdom/pet/legal ownership, cascade rules, save/load, or generic relation system.
 - Cardinal one-cell movement, prototype WATER blocking, lack of occupancy, and allowing multiple entities in one cell are temporary Faz 3B contracts, not universal species or final movement rules.
 - Semarel may take high-level inspiration from emergent sandbox simulations, but its systems, mechanics, identity, and visual language must be original.
 
 ## Open decisions
 
-Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, simulation tick rate/catch-up policy, final entity schema, species, health, needs, death/corpse/lifecycle rules, cross-entity relationship slice, sub-cell movement/speed, terrain costs, swimming/flying, occupancy/collision, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
+Final chunk size, logical world size, terrain type count, terrain art scale, biome architecture, elevation representation/precision/meaning, production generation algorithm and layer relationships, simulation tick rate/catch-up policy, final entity schema, species, health, needs, death/corpse/lifecycle rules, production relationship semantics, data-driven definition boundary, sub-cell movement/speed, terrain costs, swimming/flying, occupancy/collision, climate simulation, fluid simulation, navigation, save format, and threading model remain intentionally undecided.
 
 ## Verified development tools
 
@@ -130,6 +136,7 @@ Godot, Git, Git LFS, Python, pip, ImageMagick, FFmpeg, ffprobe, SoX, Inkscape CL
 ## Known problems and performance data
 
 - Known project problems: safe world terrain access remains the largest isolated component in the synthetic movement diagnosis; the optional living-membership layer adds modest measured overhead to that synthetic loop, but no catastrophic 2×/3× regression. More invasive optimization is deferred until representative simulation evidence exists.
+- Stable entity IDs are currently scoped to one `EntityStore`. Owner-reference lookups are constrained to their bound store, but a bare int64 cannot prove provenance if a caller passes an equal numeric ID obtained from another store instance; globally namespaced cross-world references remain unimplemented.
 - Data-only world access, generation, entity-store, and minimal movement sanity/diagnostic measurements are recorded in `docs/PERFORMANCE.md`; none is a performance target, supported-NPC claim, production guarantee, or CI threshold.
 - Production-quality procedural generation, AI, pathfinding, occupancy, animation, domain-specific lifecycle/health/needs/species systems, biomes, climate, hydrology, navigation, save/load, elevation gameplay, and further logical layers remain unimplemented by design.
 

@@ -4,6 +4,10 @@
 
 The living-to-remains transition is an occasional data-only operation over two dense optional stores. Once Living membership is removed, the entity disappears from the existing movement iteration automatically; no remains lookup or branch was added to the per-tick movement hot loop. No new benchmark or performance threshold was introduced for this narrow slice.
 
+## Faz 3E stable-reference note
+
+Owner references are compact optional rows with two packed int64 columns and one subject lookup. They are not queried by any current per-tick hot loop, and target resolution is an explicit core-ID lookup only when requested. No reverse index, graph traversal, benchmark, optimization claim, or performance threshold was added.
+
 ## Faz 1A data sanity baseline
 
 This is a small data-layout sanity measurement, not a performance target, optimization claim, or CI pass/fail threshold.

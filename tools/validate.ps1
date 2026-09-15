@@ -104,6 +104,7 @@ $requiredFiles = @(
     'scripts\entities\entity_store.gd',
     'scripts\entities\living_state_store.gd',
     'scripts\entities\remains_state_store.gd',
+    'scripts\entities\prototype_owner_reference_store.gd',
     'scripts\presentation\world_presentation_config.gd',
     'scripts\presentation\debug_entity_renderer.gd',
     'scripts\presentation\elevation_rasterizer.gd',
@@ -123,6 +124,7 @@ $requiredFiles = @(
     'tests\entity_store_test.gd',
     'tests\living_state_store_test.gd',
     'tests\remains_state_store_test.gd',
+    'tests\prototype_owner_reference_store_test.gd',
     'tests\debug_entity_renderer_test.gd',
     'tests\entity_movement_test.gd',
     'benchmarks\world_generation_sanity.gd',
@@ -371,6 +373,28 @@ if ($script:godotExecutable -and (Test-Path -LiteralPath $remainsStateStoreTest 
     }
 } else {
     Write-Fail 'Remains state store tests' 'test script or Godot executable is missing'
+}
+
+$prototypeOwnerReferenceStoreTest = Join-Path $repositoryRoot 'tests\prototype_owner_reference_store_test.gd'
+if ($script:godotExecutable -and (Test-Path -LiteralPath $prototypeOwnerReferenceStoreTest -PathType Leaf)) {
+    $testResult = Invoke-GodotCapturedCheck -Arguments @(
+        '--headless',
+        '--path',
+        $repositoryRoot,
+        '--script',
+        'res://tests/prototype_owner_reference_store_test.gd'
+    )
+    $testPassed = (
+        ($testResult.Output -match '(?m)^PROTOTYPE_OWNER_REFERENCE_STORE_TESTS_PASSED assertions=[1-9]\d*\s*$') -and
+        ($testResult.Output -notmatch '(?m)^(SCRIPT ERROR|ERROR):')
+    )
+    if ($testResult.ExitCode -eq 0 -and $testPassed) {
+        Write-Pass 'Prototype owner reference store tests' 'headless stable-reference suite completed'
+    } else {
+        Write-Fail 'Prototype owner reference store tests' "success marker missing or Godot exited with code $($testResult.ExitCode)"
+    }
+} else {
+    Write-Fail 'Prototype owner reference store tests' 'test script or Godot executable is missing'
 }
 
 $debugEntityRendererTest = Join-Path $repositoryRoot 'tests\debug_entity_renderer_test.gd'

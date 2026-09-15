@@ -32,6 +32,8 @@ Faz 3B's deterministic cardinal movement, maximum one logical cell per tick, pro
 
 Faz 3D's `RemainsState` means only that a core entity stopped being living at a simulation tick while retaining its stable identity and position. It is an architecture probe, not final death or corpse gameplay; decay, skeletons, loot, burial, resurrection, decomposition, smell, disease, scavengers, and remains presentation remain undesigned and unimplemented.
 
+Faz 3E's owner reference is only a concrete stable-ID relationship probe. It does not define inventory, building or kingdom ownership, pets, legal ownership, settlements, transfer rules, permissions, inheritance, control, or any other ownership gameplay.
+
 ## Proposed / undecided
 
 Long-term candidates include procedural world generation, mutable terrain, elevation, climate, moisture, destruction, fire and environmental simulation, vegetation, animals, large NPC populations, needs and jobs, settlements, cities, kingdoms, diplomacy, war, buildings, economy, character animation, pixel particles, weather, disasters, magic or special world effects, save/load, and thousands of simulated entities.

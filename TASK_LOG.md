@@ -214,4 +214,20 @@ The commit containing a task-log entry cannot include its own final hash. Record
 - Standard validation passed all 12 suites with 885 assertions; the new lifecycle-transition suite contributed 89 assertions and the unchanged preview smoke reported 16 terrain visuals, 16 elevation visuals, 32 core entities, and 32 living entities.
 - A visible non-headless `Semarel (DEBUG)` preview process opened successfully. This session exposed no native Computer Use surface, so pixel-level interactive inspection and reliable SPACE/E input injection could not be performed; no unreliable UI input was sent, and the existing headless runtime plus focused suites covered those unchanged paths.
 - Unresolved issues: none in the implemented lifecycle slice. The existing synthetic movement diagnosis still identifies safe terrain access as its largest isolated component; the unavailable native capture surface is a validation-environment limitation, not a project defect.
-- Commit subject: `feat: add stable lifecycle state transition` (exact hash will be backfilled by the next context-maintenance task).
+- Main implementation commit: `f738c2e967e5da9cee5e93091f906e25d4827c9e` (`feat: add stable lifecycle state transition`).
+- UID cleanup commit: `ebad3e014af292b944ab0f3222fb8f0494d24821` (`chore: track lifecycle script resource ids`).
+- Latest GitHub Actions validation passed for the cleanup commit (Validate run `34910312694`).
+
+## 2026-09-15 — Faz 3E: Stable Cross-Entity Reference Slice
+
+- Added `PrototypeOwnerReferenceStore`, bound to one `EntityStore`, with dense `PackedInt64Array` subject/owner stable-ID columns and one subject-to-dense-index lookup.
+- Added valid attach, in-place target update, safe raw reads and resolution, independent clear, swap-remove mapping repair, and technical self-reference without defining ownership gameplay.
+- Proved the central stale-target contract: deleting B leaves A's raw owner ID equal to old B while resolution becomes false; a later C receives a higher non-reused ID and cannot silently hijack the reference.
+- Proved explicit source cleanup, no cascade deletion, no automatic target-row cleanup, and no Living/Remains mutation from owner attach, update, or clear.
+- Proved that a living-to-remains transition preserves an independent owner reference and its resolved target because the core subject ID remains stable.
+- Kept the relation as a data-only architecture probe. No reverse index, relation graph/framework/type registry, edge objects, gameplay ownership rules, fake preview data, serializer, or save/load system was added.
+- Hardened the new validation check after an initial native `RefCounted.get_reference_count()` name collision exposed that a zero-assertion marker could hide compile errors. The API now uses `get_owner_reference_count()`, and the suite rejects zero assertions plus `SCRIPT ERROR`/`ERROR` output.
+- Updated architecture, constraints, design boundary, performance notes, project context, task history, and the proposed Faz 3F checkpoint without implementing Faz 3F.
+- Standard validation passed all 13 suites with 988 assertions; the new stable-reference suite contributed 103 assertions and the unchanged preview smoke still reported 32 core/32 living entities.
+- Unresolved limitation: stable IDs are scoped to one `EntityStore`. Binding confines resolution to that store, but a bare int64 cannot prove its originating store if another store contains the same numeric ID; global cross-world identity remains outside Faz 3E.
+- Commit subject: `feat: add stable entity reference slice` (exact hash will be backfilled by the next context-maintenance task).

@@ -235,6 +235,37 @@ Movement already iterates Living membership. Removing that row naturally exclude
 
 Stable-ID-preserving changes may later model cases such as construction to completed building or ground item to inventory-owned item, as well as living to remains. Only living to remains is implemented here; the other examples are not approved systems.
 
+## Stable cross-entity owner reference probe
+
+`PrototypeOwnerReferenceStore` proves one concrete directed reference while remaining an optional data slice bound to one `EntityStore`. Each dense row contains a subject stable ID and an owner stable ID in separate `PackedInt64Array` columns. A dictionary maps only subject stable IDs to ephemeral dense row indices. The target value is never an `EntityStore` dense index, `Node`, `Object`, `Resource`, or `NodePath`.
+
+```text
+Entity A stable ID
+    |
+    |-- LivingState (optional)
+    `-- PrototypeOwnerReference
+            | stable owner target ID
+            v
+         Entity B
+```
+
+Both IDs must exist in the bound core store when a reference is first attached or explicitly updated. Updating changes the target column in place and does not duplicate the subject row. Clearing uses swap-remove, repairs the moved subject mapping, and removes neither core entity nor any other optional state. Self-reference is technically valid at this storage layer because gameplay ownership rules remain undecided.
+
+Stable IDs in this slice are scoped to the bound `EntityStore`. The store never consults another world/store instance, and `is_bound_to()` lets an orchestrator reject mismatched owners. Because the stored value is intentionally a bare int64, it cannot identify that a caller obtained the same numeric value from a different `EntityStore`; globally namespaced cross-world IDs are not proven here.
+
+Stored reference is not the same as a currently resolved runtime target. If Entity B is removed, Entity A's row keeps B's old stable ID while `is_owner_resolved(A)` becomes false:
+
+```text
+A.owner_id = old B stable ID
+resolve(A.owner_id) = missing
+```
+
+`EntityStore` never reuses IDs, so a later Entity C receives a different ID and cannot silently hijack A's stale reference. This raw-versus-resolved distinction leaves room for future stale-reference diagnosis, history, and serialization without implementing any of those systems now.
+
+Target deletion does not cascade to the subject, clear the row, or change Living/Remains state. Source deletion still requires explicit orchestration: clear its optional owner row before removing the core subject. A living-to-remains transition preserves the independent owner row because it preserves the same core subject ID.
+
+This owner name is an architecture probe, not ownership gameplay. There is no reverse index, many-to-many graph, relation type enum, generic relationship table, registry, event bus, cascade policy, inventory, building/kingdom/pet/legal ownership, or serializer. Additional real relationships must justify any shared abstraction later.
+
 `DebugEntityRenderer` is one presentation `Node2D` that copies logical positions only on explicit refresh and draws all markers in one `_draw()` pass. Thirty-two deterministic non-water positions make the preview inspectable; there is no Node per entity and the renderer never owns entity data.
 
 ## Prototype deterministic movement
